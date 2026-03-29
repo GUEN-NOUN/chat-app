@@ -29,16 +29,17 @@
         if (passEl) passEl.focus();
         return;
       }
-      if (Auth.doLogin(email, pass)) {
-        if (emailEl) emailEl.value = '';
-        if (passEl) passEl.value = '';
-        Modals.close('m-login');
-        if (Auth.refreshSession) Auth.refreshSession();
-        Auth.updateAdminUI();
-        App.render();
-      } else {
-        if (passEl) { passEl.value = ''; passEl.focus(); }
-      }
+      Auth.doLogin(email, pass).then(function (ok) {
+        if (ok) {
+          if (emailEl) emailEl.value = '';
+          if (passEl) passEl.value = '';
+          Modals.close('m-login');
+          Auth.updateAdminUI();
+          App.render();
+        } else {
+          if (passEl) { passEl.value = ''; passEl.focus(); }
+        }
+      });
     }
     if (btn) btn.addEventListener('click', function (e) { doLogin(e); });
     if (passEl) passEl.addEventListener('keydown', function (e) {
@@ -94,10 +95,42 @@
   })();
 
   Navbar.init();
-  Chat.init();
+  if (Chat && typeof Chat.init === 'function') Chat.init();
   App.nav('home');
 
-  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  // ── UTF-8 encoding debug probe ────────────────────────────────────────────
+  // Runs on EVERY page load.  Open Android Studio Logcat (tag: Madarik:Encoding)
+  // or chrome://inspect DevTools console to see whether Arabic characters are
+  // intact immediately after the page has been parsed and all scripts have run.
+  // If you see "?" or boxes here, the corruption is happening before JS runs
+  // (WebView byte-decoding layer).  If the text looks correct here but breaks
+  // later, the corruption is in JavaScript DOM manipulation.
+  (function probeUtf8Encoding() {
+    // A short Arabic sentence stored as JS escape sequences so the literal
+    // itself is 100% ASCII in the source file — this rules out the possibility
+    // that the JS file itself was re-encoded during the build.
+    var probe = '\u0645\u062F\u0627\u0631\u0643 \u0627\u0644\u062A\u0639\u0644\u064A\u0645\u064A\u0629'; // 'مدارك التعليمية'
+    var level = (document.body && document.body.getAttribute('data-level')) || 'unknown';
+    // Check if a DOM text node round-trips the same characters
+    var span = document.createElement('span');
+    span.textContent = probe;
+    var domText = span.textContent;
+    var match = (domText === probe);
+    console.log(
+      '[Madarik:Encoding] Page loaded | level=' + level +
+      ' | probe=' + probe +
+      ' | domRoundTrip=' + (match ? 'OK' : 'CORRUPTED') +
+      ' | charCodes=' + probe.split('').map(function(c){return c.charCodeAt(0).toString(16);}).join(',')
+    );
+    if (!match) {
+      console.error('[Madarik:Encoding] CORRUPTION DETECTED at DOM level on page load!');
+    }
+  })();
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Skip SW registration when running inside the Capacitor native WebView
+  var _isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  if (!_isNative && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
     navigator.serviceWorker.register('sw.js').catch(function () {});
   }
 })();

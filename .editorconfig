@@ -1,0 +1,30 @@
+# EditorConfig — https://editorconfig.org
+# Supported by VS Code, Android Studio, IntelliJ, Vim, Emacs, Sublime Text, etc.
+# Every editor that honours this file will save project files as UTF-8 with
+# LF line endings — the only safe combination for a project that embeds Arabic
+# text and targets Android.
+
+root = true
+
+# ── Default: every file ────────────────────────────────────────────────────
+[*]
+charset                  = utf-8
+end_of_line              = lf
+indent_style             = space
+indent_size              = 2
+trim_trailing_whitespace = true
+insert_final_newline     = true
+
+# ── Markdown: trailing spaces signal a line-break — keep them ─────────────
+[*.md]
+trim_trailing_whitespace = false
+
+# ── Java / Kotlin / Gradle: 4-space indent ────────────────────────────────
+[*.{java,kt,kts,gradle,groovy}]
+indent_size = 4
+
+# ── PowerShell: Windows PowerShell 5.x requires CRLF line endings ─────────
+# (PSReadLine / WinPS 5 will refuse to run scripts saved as LF-only)
+[*.{ps1,psm1,psd1}]
+end_of_line              = crlf
+trim_trailing_whitespace = true

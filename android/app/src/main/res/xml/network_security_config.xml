@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    network_security_config.xml
+    Referenced from AndroidManifest.xml via android:networkSecurityConfig.
+
+    PURPOSE:
+      - Enforce TLS for all outbound traffic (no cleartext HTTP allowed).
+      - Trust user-installed CA certificates in DEBUG builds only, so
+        developers can inspect HTTPS traffic with a proxy (Charles, mitmproxy).
+      - In RELEASE builds only the standard system CA store is trusted.
+      - Allows the Capacitor local server (capacitor://localhost) to work
+        without a network policy exception since it uses a custom scheme,
+        not http://.
+
+    SECURITY NOTE:
+      `cleartextTrafficPermitted="false"` means android:usesCleartextTraffic="false"
+      in the manifest is the source of truth; this file adds domain-level
+      control on top of it.
+-->
+<network-security-config>
+
+    <!--
+        Base configuration: applied to all domains not otherwise listed.
+        TLS only; no cleartext HTTP.
+    -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- Trust system-installed CAs (production) -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!--
+        Debug overrides: applied only in debug builds.
+        Allows self-signed / user-installed CA certificates so developers can
+        intercept HTTPS traffic during development.
+        This block is IGNORED in release builds.
+    -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+
+</network-security-config>

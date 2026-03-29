@@ -1,0 +1,67 @@
+'use strict';
+
+const express = require('express');
+const crypto  = require('crypto');
+const { requireAuth, requireAdmin } = require('../middleware/auth');
+const {
+  getRooms, getMemberRooms, getRoomById, createRoom, getRoomMembers, joinRoom, leaveRoom, ensureRoom
+} = require('../db');
+
+const router = express.Router();
+
+/* GET /api/chats — list rooms the user belongs to + public rooms */
+router.get('/', requireAuth, (req, res) => {
+  const userId = req.user.userId || req.user.id;
+  const rooms = getMemberRooms(userId);
+  return res.json({ ok: true, rooms });
+});
+
+/* POST /api/chats — create a new room (admin only for group/lesson; any user for DM) */
+router.post('/', requireAuth, (req, res) => {
+  const { name, type, description } = req.body || {};
+  if (!name || typeof name !== 'string') return res.status(400).json({ ok: false, error: 'name required' });
+
+  const allowedTypes = ['group', 'dm', 'ai', 'public'];
+  const roomType = allowedTypes.includes(type) ? type : 'group';
+
+  const id = `${roomType}:${crypto.randomUUID()}`;
+  const room = createRoom(id, name.trim().slice(0, 80), roomType, req.user.userId || req.user.id, description);
+  joinRoom(id, req.user.userId || req.user.id);
+  return res.status(201).json({ ok: true, room });
+});
+
+/* GET /api/chats/:id — room detail + members */
+router.get('/:id', requireAuth, (req, res) => {
+  const room = getRoomById(req.params.id);
+  if (!room) return res.status(404).json({ ok: false, error: 'Room not found' });
+  const members = getRoomMembers(req.params.id);
+  return res.json({ ok: true, room, members });
+});
+
+/* POST /api/chats/:id/join */
+router.post('/:id/join', requireAuth, (req, res) => {
+  const room = getRoomById(req.params.id);
+  if (!room) return res.status(404).json({ ok: false, error: 'Room not found' });
+  const userId = req.user.userId || req.user.id;
+  joinRoom(req.params.id, userId);
+  return res.json({ ok: true });
+});
+
+/* POST /api/chats/:id/leave */
+router.post('/:id/leave', requireAuth, (req, res) => {
+  const userId = req.user.userId || req.user.id;
+  leaveRoom(req.params.id, userId);
+  return res.json({ ok: true });
+});
+
+/* POST /api/chats/:id/members — add another user to a room (creator/any member) */
+router.post('/:id/members', requireAuth, (req, res) => {
+  const room = getRoomById(req.params.id);
+  if (!room) return res.status(404).json({ ok: false, error: 'Room not found' });
+  const { userId } = req.body || {};
+  if (!userId || typeof userId !== 'string') return res.status(400).json({ ok: false, error: 'userId required' });
+  joinRoom(req.params.id, String(userId).slice(0, 80));
+  return res.json({ ok: true });
+});
+
+module.exports = router;

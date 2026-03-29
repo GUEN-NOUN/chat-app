@@ -1,0 +1,32 @@
+# Environment / secrets
+.env
+server/.env
+*.env
+
+# Dependencies
+node_modules/
+server/node_modules/
+
+# SQLite databases
+server/*.db
+server/*.db-wal
+server/*.db-shm
+
+# Android build artefacts
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+
+# Capacitor / Cordova
+android/capacitor-cordova-android-plugins/build/
+www/*.map
+
+# Editor directories
+.idea/
+.vscode/settings.json
+*.DS_Store
+
+# Logs
+*.log
+npm-debug.log*

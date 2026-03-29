@@ -1,0 +1,68 @@
+{
+  "name": "chat-app",
+  "version": "1.0.0",
+  "description": "موقع تعليمي عربي (RTL) مع دروس فيديو، PDF، تمارين، وامتحانات تجريبية.",
+  "main": "sw.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+
+    "───── DEV ─────────────────────────────────────────────": "",
+    "dev": "concurrently --names \"SERVER,VITE\" --prefix-colors \"cyan,green\" \"npm run server\" \"npm run chat:dev\"",
+    "server": "node server/index.js",
+    "chat:dev": "cd client && npx vite --port 5173 --host 0.0.0.0",
+
+    "───── BUILD & SYNC (web + Android + iOS) ──────────────": "",
+    "build": "powershell -ExecutionPolicy Bypass -File build-www.ps1",
+    "sync": "npm run build",
+    "prebuild": "powershell -ExecutionPolicy Bypass -File strip-bom.ps1",
+
+    "───── CAPACITOR ────────────────────────────────────────": "",
+    "cap:sync": "npx cap sync",
+    "cap:copy": "npx cap copy",
+    "android": "npm run sync && npx cap open android",
+    "ios": "npm run sync && npx cap open ios",
+    "live:android": "concurrently --names \"SERVER,VITE\" --kill-others \"npm run server\" \"cd client && npx vite --port 5173 --host 0.0.0.0\" & npx cap run android --livereload --external --host=192.168.5.1 --port=5173",
+
+    "───── TOOLS ────────────────────────────────────────────": "",
+    "lint": "eslint js/ --ext .js",
+    "lint:fix": "eslint js/ --ext .js --fix",
+    "strip-bom": "powershell -ExecutionPolicy Bypass -File strip-bom.ps1",
+    "verify": "powershell -ExecutionPolicy Bypass -File verify-encoding.ps1",
+    "chat:build": "cd client && npx vite build",
+    "chat:install": "cd client && npm install",
+    "server:install": "cd server && npm install",
+
+    "───── DEPLOY ───────────────────────────────────────────": "",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d www"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/achraf0011/MATCH-v2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/achraf0011/MATCH-v2/issues"
+  },
+  "homepage": "https://github.com/achraf0011/MATCH-v2#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/cli": "^8.1.0",
+    "@capacitor/core": "^8.1.0",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/ios": "^8.3.0",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "eslint": "^8.57.0",
+    "gh-pages": "^6.3.0",
+    "prettier": "^3.3.0"
+  }
+}

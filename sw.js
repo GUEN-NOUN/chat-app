@@ -11,7 +11,7 @@
  *     That command keeps sw.js, js/version.js, version.json and all HTML
  *     ?v= query strings in sync automatically.
  */
-var CACHE_VERSION = 'madarik-v3';  /* ← managed by bump-version.py */
+var CACHE_VERSION = 'madarik-v4';  /* ← bumped to clear old /chat/ cache entry */
 
 /* Install: activate immediately without waiting for old SW to stop */
 self.addEventListener('install', function () {
@@ -40,6 +40,15 @@ self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET') return;
 
   var url = e.request.url;
+
+  /* Skip API calls and WebSocket-related paths — never cache auth/chat data */
+  if (url.includes('/api/') || url.includes('/ws')) return;
+
+  /* Skip the React chat SPA — let the browser always fetch fresh from server.
+     This prevents the SW from caching /chat/ with an old redirect page. */
+  if (url.includes('/chat/') || url.includes('/chat?') ||
+      url.match(/\/chat$/) || url.includes('/socket.io')) return;
+
   var isThirdParty = url.includes('googleapis.com') ||
                      url.includes('gstatic.com')    ||
                      url.includes('youtube.com')    ||

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    colors.xml — Brand colour palette for مدارك التعليمية.
+    These match the CSS variables in css/main.css:
+      bg:    #0b1629   (deep navy — page background)
+      blue:  #4e8cff   (primary accent)
+      blue2: #6aa3ff   (lighter accent)
+-->
+<resources>
+    <!-- Primary brand colours -->
+    <color name="colorPrimary">#4e8cff</color>
+    <color name="colorPrimaryDark">#0b1629</color>
+    <color name="colorAccent">#6aa3ff</color>
+
+    <!-- Window background — prevents the white flash before WebView loads -->
+    <color name="windowBackground">#0b1629</color>
+
+    <!-- Splash screen background (used by AppTheme.NoActionBarLaunch) -->
+    <color name="splashBackground">#0b1629</color>
+
+    <!-- Adaptive icon background colour -->
+    
+</resources>

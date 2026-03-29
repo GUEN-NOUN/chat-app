@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8"/>
@@ -31,6 +31,7 @@
   <nav id="navbar">
     <div class="nav-inner">
       <div class="nav-admin">
+        <button class="theme-toggle" type="button" aria-label="تبديل السمة">🌙</button>
         <div class="admin-badge" id="admin-badge">✅ مسؤول</div>
         <button id="admin-login-btn" type="button">🔐 دخول المسؤول</button>
       </div>
@@ -239,55 +240,29 @@
     </div>
   </div>
 
-  <div id="chat-widget">
-    <button id="chat-fab" type="button" aria-label="المحادثات">
-      💬
-      <span class="unread-badge" id="unread-badge"></span>
-    </button>
-    <div id="chat-box">
-      <div class="chat-layout">
-        <div class="chat-sidebar" id="chat-sidebar">
-          <div class="csb-head">
-            <span>👥 الأصدقاء</span>
-            <button class="csb-mobile-back" id="csb-back" type="button" aria-label="رجوع" title="رجوع">✕</button>
-          </div>
-          <div class="ch-you-label" id="chat-you-label"></div>
-          <div class="csb-search"><input type="text" placeholder="بحث في الرسائل..." id="f-search"/></div>
-          <div class="csb-filter-pills" id="csb-filters">
-            <button class="csb-filter-pill active" data-filter="all">الكل</button>
-            <button class="csb-filter-pill" data-filter="text">نص</button>
-            <button class="csb-filter-pill" data-filter="image">صور</button>
-            <button class="csb-filter-pill" data-filter="audio">صوت</button>
-          </div>
-          <div class="friends-list" id="friends-list"></div>
-          <div class="csb-new-chat-wrap">
-            <button class="csb-new-chat" id="csb-new-chat" type="button">✏️ محادثة جديدة</button>
-          </div>
-        </div>
-        <div class="chat-main" id="chat-main">
-          <div class="chat-no-sel">
-            <span class="big">💬</span>
-            <p>اختر صديقًا لبدء المحادثة</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Chat — opens the new Socket.io React SPA -->
+  <button id="chat-fab" type="button" aria-label="فتح الدردشة" aria-expanded="false" title="الدردشة">💬</button>
 
-  <input type="file" id="img-pick" accept="image/png,image/jpeg,image/webp" style="display:none"/>
-  <input type="file" id="aud-pick" accept="audio/mpeg,audio/mp3,audio/ogg,audio/wav,audio/webm" style="display:none"/>
+
 
   <script src="js/version.js?v=3"></script>
   <script src="js/config.js?v=3"></script>
   <script src="js/utils.js?v=3"></script>
   <script src="js/storage.js?v=3"></script>
+  <script src="js/theme.js?v=3"></script>
   <script src="js/auth.js?v=3"></script>
   <script src="js/modals.js?v=3"></script>
   <script src="js/app.js?v=3"></script>
   <script src="js/navbar.js?v=3"></script>
   <script src="js/user-registry.js?v=3"></script>
-  <script src="js/chat.js?v=3"></script>
+  <!-- Reports module: enables the 🚩 report button on chat messages -->
+  <!-- reports.js checks window.RBAC at call time, so loading order with rbac.js does not matter here -->
+  <script src="js/reports.js?v=1"></script>
+  <script src="js/friends.js?v=1"></script>
+  <script src="js/groups.js?v=1"></script>
+  <script src="js/permissions.js?v=1"></script>
   <script src="js/pages.js?v=3"></script>
   <script src="js/bootstrap.js?v=3"></script>
+  <script src="assets/chat-overlay.js?v=1"></script>
 </body>
 </html>

@@ -1,0 +1,16 @@
+node_modules
+server/node_modules
+client/node_modules
+server/madarik.db
+server/madarik.db-shm
+server/madarik.db-wal
+server/.env
+uploads/
+.git
+.venv
+android/
+ios/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db

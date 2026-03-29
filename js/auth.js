@@ -1,88 +1,127 @@
 'use strict';
 
 /**
- * Admin auth: secure session storage with expiry. No password stored.
- * Session timeout after ADMIN_SESSION_TIMEOUT_MS; refresh on activity.
+ * Admin auth — server-side JWT authentication via /api/auth
+ *
+ * Security:
+ *  - No credentials stored in frontend code
+ *  - Login POSTs to /api/auth/login; JWT returned in HTTP-only cookie
+ *  - Session verified via /api/auth/me (cookie auto-sent)
+ *  - Logout clears HTTP-only cookie server-side
+ *  - Rate limiting enforced server-side
  */
 (function () {
-  var KEYS = window.APP_CONFIG.STORAGE_KEYS;
-  var CREDS = window.APP_CONFIG.CREDS;
-  var TIMEOUT_MS = window.APP_CONFIG.ADMIN_SESSION_TIMEOUT_MS || (30 * 60 * 1000);
-  var Storage = window.Storage;
+  var API = window.APP_CONFIG.API_URL || '';
 
   var isAdmin = false;
+  var adminInfo = null;
+  var refreshTimer = null;
 
-  function getSession() {
-    var raw = Storage.getItem(KEYS.ADMIN);
-    if (raw === '1' || raw === true || raw === 1) {
-      persistSession(true);
-      return { exp: Date.now() + TIMEOUT_MS };
+  /* ── fetch wrapper (always sends cookies) ── */
+  function apiFetch(path, options) {
+    var opts = Object.assign({ credentials: 'include' }, options || {});
+    if (opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)) {
+      opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+      opts.body = JSON.stringify(opts.body);
     }
-    if (!raw || typeof raw !== 'object' || !raw.exp) return null;
-    if (raw.exp <= Date.now()) return null;
-    return raw;
+    return fetch(API + path, opts).then(function (res) { return res.json(); });
   }
 
-  function persistSession(active) {
-    if (!active) {
-      Storage.setItem(KEYS.ADMIN, { exp: 0 });
-      return;
-    }
-    Storage.setItem(KEYS.ADMIN, { exp: Date.now() + TIMEOUT_MS });
+  /* ── Verify current session with server ── */
+  function checkSession() {
+    return apiFetch('/api/auth/me').then(function (data) {
+      if (data.ok && data.admin) {
+        isAdmin = true;
+        adminInfo = data.admin;
+      } else {
+        isAdmin = false;
+        adminInfo = null;
+      }
+      return isAdmin;
+    }).catch(function () {
+      isAdmin = false;
+      adminInfo = null;
+      return false;
+    });
   }
 
-  function load() {
-    var s = getSession();
-    isAdmin = !!s;
+  function getIsAdmin() { return isAdmin; }
+  function getAdminInfo() { return adminInfo; }
+
+  /* ── LOGIN (returns Promise<boolean>) ── */
+  function doLogin(email, pass) {
+    var emailNorm = (email || '').trim().toLowerCase();
+    var passNorm  = (pass || '').trim();
+
+    if (!emailNorm || !passNorm) {
+      if (window.Modals) window.Modals.toast('❌ أدخل البريد وكلمة المرور', 'err');
+      return Promise.resolve(false);
+    }
+
+    return apiFetch('/api/auth/login', {
+      method: 'POST',
+      body: { email: emailNorm, password: passNorm }
+    }).then(function (data) {
+      if (data.ok) {
+        isAdmin = true;
+        adminInfo = data.admin || { email: emailNorm };
+        if (window.Modals) window.Modals.toast('✅ مرحبًا! تم تسجيل الدخول بنجاح', 'ok');
+        updateAdminUI();
+        scheduleRefresh();
+        return true;
+      }
+      isAdmin = false;
+      adminInfo = null;
+      if (window.Modals) window.Modals.toast('❌ ' + (data.error || 'فشل تسجيل الدخول'), 'err');
+      return false;
+    }).catch(function () {
+      if (window.Modals) window.Modals.toast('❌ تعذر الاتصال بالخادم', 'err');
+      return false;
+    });
+  }
+
+  /* ── LOGOUT (returns Promise<boolean>) ── */
+  function doLogout() {
+    if (!confirm('هل تريد تسجيل الخروج من لوحة التحكم؟')) return Promise.resolve(false);
+
+    return apiFetch('/api/auth/logout', { method: 'POST' }).then(function () {
+      isAdmin = false;
+      adminInfo = null;
+      clearTimeout(refreshTimer);
+      if (window.Modals) window.Modals.toast('تم تسجيل الخروج', 'inf');
+      updateAdminUI();
+      return true;
+    }).catch(function () {
+      isAdmin = false;
+      adminInfo = null;
+      updateAdminUI();
+      return true;
+    });
+  }
+
+  /* ── Periodic session refresh ── */
+  function scheduleRefresh() {
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(function () {
+      checkSession().then(function (ok) {
+        if (ok) scheduleRefresh();
+        else updateAdminUI();
+      });
+    }, 15 * 60 * 1000);
   }
 
   function refreshSession() {
     if (!isAdmin) return;
-    persistSession(true);
+    checkSession().then(function (ok) {
+      if (!ok) {
+        updateAdminUI();
+        if (window.Modals) window.Modals.toast('انتهت الجلسة. يرجى تسجيل الدخول مجدداً.', 'inf');
+      }
+    });
   }
 
-  function getIsAdmin() {
-    var s = getSession();
-    if (!s) {
-      isAdmin = false;
-      return false;
-    }
-    isAdmin = true;
-    return true;
-  }
-
-  function setAdmin(value) {
-    isAdmin = !!value;
-    persistSession(isAdmin);
-  }
-
-  function doLogin(email, pass) {
-    var emailNorm = (email || '').trim().toLowerCase();
-    var passNorm = (pass || '').trim();
-    var expectedEmail = (CREDS.email || '').trim().toLowerCase();
-    var expectedPass = (CREDS.pass || '').trim();
-    var ok = expectedEmail.length > 0 && expectedPass.length > 0 &&
-             emailNorm === expectedEmail && passNorm === expectedPass;
-    if (ok) {
-      isAdmin = true;
-      persistSession(true);
-      if (window.Modals) window.Modals.toast('✅ مرحبًا! تم تسجيل الدخول بنجاح', 'ok');
-    } else {
-      if (window.Modals) window.Modals.toast('❌ البريد الإلكتروني أو كلمة المرور غير صحيحة', 'err');
-    }
-    return ok;
-  }
-
-  function doLogout() {
-    if (!confirm('هل تريد تسجيل الخروج من لوحة التحكم؟')) return false;
-    isAdmin = false;
-    persistSession(false);
-    if (window.Modals) window.Modals.toast('تم تسجيل الخروج', 'inf');
-    return true;
-  }
-
+  /* ── Update admin-related UI across the page ── */
   function updateAdminUI() {
-    isAdmin = getIsAdmin();
     var btn = document.getElementById('admin-login-btn');
     var badge = document.getElementById('admin-badge');
     if (!btn) return;
@@ -97,7 +136,6 @@
       if (badge) badge.classList.remove('show');
       document.body.classList.remove('admin-active');
     }
-    // Sync mobile menu admin button (injected by navbar.js)
     var mobBtn = document.getElementById('mob-admin-btn');
     if (mobBtn) {
       if (isAdmin) {
@@ -110,13 +148,25 @@
     }
   }
 
-  load();
+  /* ── Init: check session on page load ── */
+  function init() {
+    return checkSession().then(function () {
+      updateAdminUI();
+      if (isAdmin) scheduleRefresh();
+    });
+  }
+
+  // Run initial check
+  init();
+
   window.Auth = {
-    getIsAdmin: getIsAdmin,
-    setAdmin: setAdmin,
-    doLogin: doLogin,
-    doLogout: doLogout,
-    updateAdminUI: updateAdminUI,
-    refreshSession: refreshSession
+    getIsAdmin:     getIsAdmin,
+    getAdminInfo:   getAdminInfo,
+    doLogin:        doLogin,
+    doLogout:       doLogout,
+    updateAdminUI:  updateAdminUI,
+    refreshSession: refreshSession,
+    checkSession:   checkSession,
+    init:           init
   };
 })();

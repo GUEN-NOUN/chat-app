@@ -1,0 +1,89 @@
+# .github/workflows/deploy.yml
+#
+# PURPOSE
+#   Automatically deploy the www/ build output to the gh-pages branch
+#   whenever changes are pushed to main.
+#
+#   GitHub Pages is then configured (Settings → Pages) to serve from the
+#   gh-pages branch at its root, so www/index.html becomes the site root:
+#       https://<user>.github.io/<repo>/
+#
+# FIX: This solves the "GitHub Pages does not load because index.html is
+#      inside www" problem — the workflow promotes www/ contents to the
+#      root of the gh-pages branch, making index.html directly accessible.
+
+name: Deploy to GitHub Pages
+
+on:
+  # Trigger on every push to main
+  push:
+    branches:
+      - main
+  # Allow manual runs from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to push to gh-pages branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Check out source ──────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Node (same major version as local dev) ─────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── 3. Install dependencies ──────────────────────────────────────────
+      - name: Install dependencies
+        run: npm ci
+
+      # ── 4. Build: copy sources into www/ ────────────────────────────────
+      # FIX: On Linux the PowerShell script is replaced by a shell equivalent
+      #      that does the same job: copy HTML, css/, js/, assets/, sw.js,
+      #      version.json into www/ and add .nojekyll.
+      - name: Build www/ output
+        run: |
+          # Recreate www/ from source (mirrors what build-www.ps1 does)
+          rm -rf www
+          mkdir -p www
+
+          # Copy HTML pages
+          cp *.html www/ 2>/dev/null || true
+
+          # Copy asset folders
+          for folder in css js assets; do
+            if [ -d "$folder" ]; then
+              cp -r "$folder" www/
+            else
+              mkdir -p "www/$folder"
+            fi
+          done
+
+          # Copy service worker and version manifest
+          for file in sw.js version.json; do
+            [ -f "$file" ] && cp "$file" www/
+          done
+
+          # FIX: disable Jekyll so GitHub Pages serves every file as-is
+          touch www/.nojekyll
+
+      # ── 5. Deploy www/ → gh-pages branch ────────────────────────────────
+      # FIX: The peaceiris/actions-gh-pages action pushes only the contents
+      #      of publish_dir (www/) to the gh-pages branch root, so
+      #      www/index.html becomes the site entry point at /.
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./www
+          # FIX: keep .nojekyll in the deployed branch
+          keep_files: false
+          force_orphan: true

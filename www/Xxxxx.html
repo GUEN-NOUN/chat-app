@@ -1,0 +1,2974 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>الأولى إعدادي | مدارك التعليمية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@400;600;700;900&display=swap"
+    rel="stylesheet">
+  <!-- Favicons / PWA icons ─────────────────────────────────────────────── -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="icon" href="assets/favicon.svg" sizes="any" />
+  <link rel="apple-touch-icon" href="assets/favicon-apple.svg" />
+  <meta name="theme-color" content="#0b1629" />
+  <!-- ─────────────────────────────────────────────────────────────────── -->
+  <style>
+    /* ══════════════════════════════════════
+   ROOT VARIABLES
+══════════════════════════════════════ */
+    :root {
+      --navy: #050d1f;
+      --navy2: #0c1a35;
+      --navy3: #0f2147;
+      --blue: #1845d4;
+      --blue2: #2a5aff;
+      --blue3: #5b82ff;
+      --gold: #f5a623;
+      --gold2: #ffbe45;
+      --teal: #00d9b5;
+      --red: #e03e3e;
+      --green: #22c55e;
+      --white: #ffffff;
+      --text: rgba(255, 255, 255, 0.88);
+      --text2: rgba(255, 255, 255, 0.55);
+      --text3: rgba(255, 255, 255, 0.25);
+      --border: rgba(255, 255, 255, 0.08);
+      --border2: rgba(255, 255, 255, 0.15);
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --card-hover: rgba(42, 90, 255, 0.12);
+      --shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+      --shadow2: 0 8px 50px rgba(0, 0, 0, 0.65);
+      --r: 12px;
+      --r2: 18px;
+      --ease: cubic-bezier(.4, 0, .2, 1);
+    }
+
+    /* ══════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════ */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ══════════════════════════════════════
+   ANIMATED BACKGROUND
+══════════════════════════════════════ */
+    .bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      animation: orbFloat 12s ease-in-out infinite;
+    }
+
+    .bg-orb-1 {
+      width: 600px;
+      height: 600px;
+      background: rgba(24, 69, 212, .18);
+      top: -200px;
+      right: -200px;
+      animation-delay: 0s;
+    }
+
+    .bg-orb-2 {
+      width: 400px;
+      height: 400px;
+      background: rgba(245, 166, 35, .1);
+      bottom: -150px;
+      left: -100px;
+      animation-delay: -5s;
+    }
+
+    .bg-orb-3 {
+      width: 300px;
+      height: 300px;
+      background: rgba(0, 217, 181, .08);
+      top: 50%;
+      left: 30%;
+      animation-delay: -9s;
+    }
+
+    @keyframes orbFloat {
+
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1);
+      }
+
+      33% {
+        transform: translate(30px, -20px) scale(1.05);
+      }
+
+      66% {
+        transform: translate(-20px, 25px) scale(0.97);
+      }
+    }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(42, 90, 255, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(42, 90, 255, .035) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    /* ══════════════════════════════════════
+   NAVBAR
+══════════════════════════════════════ */
+    #navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 900;
+      height: 62px;
+      background: rgba(5, 13, 31, .88);
+      backdrop-filter: blur(20px) saturate(1.3);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      gap: 16px;
+    }
+
+    /* Brand */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--blue2), var(--gold));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 2px 14px rgba(42, 90, 255, .45);
+      transition: transform .25s var(--ease);
+    }
+
+    .brand:hover .brand-logo {
+      transform: rotate(-8deg) scale(1.08);
+    }
+
+    .brand-name {
+      font-family: 'Cairo', sans-serif;
+      font-weight: 900;
+      font-size: 17px;
+    }
+
+    .brand-name span {
+      color: var(--gold);
+    }
+
+    /* Nav links */
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      list-style: none;
+    }
+
+    .nav-link {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14.5px;
+      font-weight: 500;
+      color: var(--text2);
+      padding: 7px 14px;
+      border-radius: 8px;
+      transition: all .2s var(--ease);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+    }
+
+    .nav-link:hover {
+      color: var(--white);
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .nav-link.active {
+      color: var(--gold);
+      background: rgba(245, 166, 35, .1);
+      font-weight: 700;
+    }
+
+    /* Dropdown */
+    .nav-dd {
+      position: relative;
+    }
+
+    .dd-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      background: var(--navy2);
+      border: 1px solid var(--border2);
+      border-radius: var(--r);
+      min-width: 195px;
+      overflow: hidden;
+      box-shadow: var(--shadow2);
+      z-index: 901;
+    }
+
+    .nav-dd:hover .dd-menu {
+      display: block;
+    }
+
+    .dd-link {
+      display: block;
+      padding: 11px 18px;
+      color: var(--text2);
+      font-size: 14px;
+      text-decoration: none;
+      transition: all .18s var(--ease);
+      cursor: pointer;
+    }
+
+    .dd-link:hover {
+      background: rgba(42, 90, 255, .15);
+      color: var(--white);
+      padding-right: 24px;
+    }
+
+    .dd-link.active {
+      color: var(--gold2);
+    }
+
+    /* Admin area */
+    .nav-admin {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-right: auto;
+    }
+
+    .admin-badge {
+      display: none;
+      align-items: center;
+      gap: 7px;
+      background: rgba(34, 197, 94, .12);
+      border: 1px solid rgba(34, 197, 94, .3);
+      color: var(--green);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .admin-badge.show {
+      display: flex;
+    }
+
+    #admin-login-btn {
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 13.5px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+      color: white;
+      box-shadow: 0 2px 12px rgba(42, 90, 255, .4);
+      transition: all .22s var(--ease);
+      white-space: nowrap;
+    }
+
+    #admin-login-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 18px rgba(42, 90, 255, .55);
+    }
+
+    #admin-login-btn.logout {
+      background: linear-gradient(135deg, #b91c1c, var(--red));
+    }
+
+    /* Hamburger */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 21px;
+      height: 2px;
+      background: var(--text2);
+      border-radius: 2px;
+      transition: all .25s var(--ease);
+    }
+
+    /* ══════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════ */
+    main {
+      position: relative;
+      z-index: 1;
+      padding-top: 62px;
+      min-height: 100vh;
+    }
+
+    #page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 36px 20px 80px;
+      animation: pageIn .32s var(--ease);
+    }
+
+    @keyframes pageIn {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* ══════════════════════════════════════
+   SECTION HEADER
+══════════════════════════════════════ */
+    .sec-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sec-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 13px;
+      background: linear-gradient(135deg, var(--blue2), var(--gold));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 21px;
+      box-shadow: 0 3px 16px rgba(42, 90, 255, .35);
+      flex-shrink: 0;
+    }
+
+    .sec-header h2 {
+      font-family: 'Cairo', sans-serif;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .sec-count {
+      margin-right: auto;
+      background: rgba(42, 90, 255, .15);
+      border: 1px solid rgba(42, 90, 255, .3);
+      color: var(--blue3);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* ══════════════════════════════════════
+   ADMIN CONTROLS BAR
+══════════════════════════════════════ */
+    .admin-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: linear-gradient(135deg, rgba(34, 197, 94, .07), rgba(34, 197, 94, .03));
+      border: 1px solid rgba(34, 197, 94, .22);
+      border-radius: var(--r);
+      padding: 14px 18px;
+      margin-bottom: 26px;
+    }
+
+    .admin-bar-label {
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 700;
+      background: rgba(34, 197, 94, .12);
+      border-radius: 6px;
+      padding: 3px 9px;
+    }
+
+    /* ══════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all .22s var(--ease);
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+      color: white;
+      box-shadow: 0 3px 14px rgba(42, 90, 255, .4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(42, 90, 255, .55);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #9b1c1c, var(--red));
+      color: white;
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(224, 62, 62, .4);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #15803d, var(--green));
+      color: white;
+    }
+
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(34, 197, 94, .4);
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, .08);
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, .14);
+    }
+
+    .btn-sm {
+      padding: 7px 14px;
+      font-size: 13px;
+      border-radius: 8px;
+    }
+
+    .btn-icon {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: 8px;
+      justify-content: center;
+    }
+
+    /* Download button — special */
+    .btn-download {
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+      color: white;
+      padding: 9px 20px;
+      border-radius: 10px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 13.5px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all .22s var(--ease);
+      box-shadow: 0 2px 12px rgba(42, 90, 255, .35);
+      white-space: nowrap;
+    }
+
+    .btn-download:hover {
+      transform: scale(1.04) translateY(-1px);
+      box-shadow: 0 5px 18px rgba(42, 90, 255, .5);
+    }
+
+    .btn-coming {
+      color: var(--text3);
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    /* ══════════════════════════════════════
+   HOMEPAGE
+══════════════════════════════════════ */
+    .home-hero {
+      text-align: center;
+      padding: 52px 16px 44px;
+    }
+
+    .home-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(245, 166, 35, .1);
+      border: 1px solid rgba(245, 166, 35, .3);
+      color: var(--gold2);
+      border-radius: 30px;
+      padding: 6px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 22px;
+    }
+
+    .home-hero h1 {
+      font-family: 'Cairo', sans-serif;
+      font-size: clamp(30px, 5vw, 50px);
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, var(--white) 40%, var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .home-hero p {
+      font-size: 17px;
+      color: var(--text2);
+      max-width: 500px;
+      margin: 0 auto 42px;
+    }
+
+    .home-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+    }
+
+    .home-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .28s var(--ease);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .home-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(42, 90, 255, .15), transparent 70%);
+      transition: opacity .3s var(--ease);
+    }
+
+    .home-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(42, 90, 255, .45);
+      box-shadow: 0 12px 34px rgba(42, 90, 255, .18);
+    }
+
+    .home-card:hover::before {
+      opacity: 1;
+    }
+
+    .hc-icon {
+      font-size: 38px;
+      margin-bottom: 13px;
+      display: block;
+    }
+
+    .hc-title {
+      font-family: 'Cairo', sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+    .hc-count {
+      font-size: 13px;
+      color: var(--text2);
+    }
+
+    /* ══════════════════════════════════════
+   VIDEO GRID
+══════════════════════════════════════ */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+      gap: 20px;
+    }
+
+    .vid-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all .28s var(--ease);
+      position: relative;
+      animation: cardIn .35s var(--ease) both;
+    }
+
+    @keyframes cardIn {
+      from {
+        opacity: 0;
+        transform: scale(.96);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .vid-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(42, 90, 255, .45);
+      box-shadow: 0 14px 36px rgba(42, 90, 255, .22);
+    }
+
+    .vid-thumb {
+      position: relative;
+      padding-top: 56.25%;
+      overflow: hidden;
+      background: linear-gradient(135deg, var(--navy2), var(--navy3));
+    }
+
+    .vid-thumb img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform .4s var(--ease);
+    }
+
+    .vid-card:hover .vid-thumb img {
+      transform: scale(1.07);
+    }
+
+    .vid-play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .93);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .25s var(--ease);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, .4);
+    }
+
+    .vid-play::after {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 18px solid var(--blue2);
+      border-top: 11px solid transparent;
+      border-bottom: 11px solid transparent;
+      margin-right: -4px;
+    }
+
+    .vid-card:hover .vid-play {
+      transform: translate(-50%, -50%) scale(1.12);
+      background: white;
+    }
+
+    .vid-info {
+      padding: 15px 16px;
+    }
+
+    .vid-title {
+      font-family: 'Cairo', sans-serif;
+      font-weight: 700;
+      font-size: 14.5px;
+      color: var(--white);
+      margin-bottom: 5px;
+      line-height: 1.4;
+    }
+
+    .vid-desc {
+      font-size: 12.5px;
+      color: var(--text2);
+      line-height: 1.5;
+    }
+
+    /* Admin delete overlay on video card */
+    .vid-del {
+      position: absolute;
+      top: 9px;
+      left: 9px;
+      z-index: 5;
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: rgba(224, 62, 62, .82);
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 13px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s var(--ease);
+      backdrop-filter: blur(4px);
+    }
+
+    .vid-del:hover {
+      background: var(--red);
+      transform: scale(1.1);
+    }
+
+    .admin-active .vid-del {
+      display: flex;
+    }
+
+    /* ══════════════════════════════════════
+   PDF / EXERCISE / TEST LIST
+══════════════════════════════════════ */
+    .doc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .doc-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 18px 20px;
+      transition: all .25s var(--ease);
+      animation: cardIn .3s var(--ease) both;
+    }
+
+    .doc-item:hover {
+      border-color: rgba(42, 90, 255, .4);
+      background: var(--card-hover);
+      transform: translateX(-4px);
+    }
+
+    .doc-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .doc-icon.pdf {
+      background: linear-gradient(135deg, #b91c1c, #e03e3e);
+    }
+
+    .doc-icon.ex {
+      background: linear-gradient(135deg, #6d28d9, #8b5cf6);
+    }
+
+    .doc-icon.test {
+      background: linear-gradient(135deg, var(--gold2), var(--gold));
+    }
+
+    .doc-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .doc-title {
+      font-family: 'Cairo', sans-serif;
+      font-weight: 700;
+      font-size: 15.5px;
+      margin-bottom: 4px;
+    }
+
+    .doc-desc {
+      font-size: 13px;
+      color: var(--text2);
+    }
+
+    .doc-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .doc-del {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid rgba(224, 62, 62, .3);
+      background: rgba(224, 62, 62, .1);
+      color: var(--red);
+      cursor: pointer;
+      font-size: 15px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s var(--ease);
+    }
+
+    .doc-del:hover {
+      background: rgba(224, 62, 62, .25);
+      border-color: rgba(224, 62, 62, .5);
+    }
+
+    .admin-active .doc-del {
+      display: flex;
+    }
+
+    /* ══════════════════════════════════════
+   EMPTY STATE
+══════════════════════════════════════ */
+    .empty {
+      text-align: center;
+      padding: 64px 20px;
+      color: var(--text3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .empty-icon {
+      font-size: 54px;
+      opacity: .45;
+    }
+
+    .empty p {
+      font-size: 15px;
+    }
+
+    /* ══════════════════════════════════════
+   MODALS
+══════════════════════════════════════ */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, .72);
+      backdrop-filter: blur(8px);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--navy2);
+      border: 1px solid var(--border2);
+      border-radius: var(--r2);
+      padding: 36px 32px;
+      max-width: 480px;
+      width: 100%;
+      max-height: 92vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow2);
+      animation: modalIn .28s var(--ease);
+    }
+
+    @keyframes modalIn {
+      from {
+        transform: translateY(36px) scale(.97);
+        opacity: 0;
+      }
+
+      to {
+        transform: none;
+        opacity: 1;
+      }
+    }
+
+    .modal-head {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .modal-head .micon {
+      font-size: 36px;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .modal-head h3 {
+      font-family: 'Cairo', sans-serif;
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .modal-head p {
+      font-size: 13.5px;
+      color: var(--text2);
+      margin-top: 5px;
+    }
+
+    .form-field {
+      margin-bottom: 18px;
+    }
+
+    .form-field label {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, .75);
+      margin-bottom: 8px;
+    }
+
+    .form-field input,
+    .form-field textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, .06);
+      border: 1.5px solid var(--border2);
+      border-radius: 10px;
+      font-size: 14.5px;
+      font-family: 'Tajawal', sans-serif;
+      color: var(--white);
+      transition: border-color .2s var(--ease);
+    }
+
+    .form-field input[type="file"] {
+      padding: 10px;
+    }
+
+    .form-field input:focus,
+    .form-field textarea:focus {
+      outline: none;
+      border-color: var(--blue2);
+      background: rgba(42, 90, 255, .08);
+    }
+
+    .form-field input::placeholder,
+    .form-field textarea::placeholder {
+      color: var(--text3);
+    }
+
+    .form-field textarea {
+      resize: vertical;
+      min-height: 85px;
+    }
+
+    .field-hint {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 5px;
+    }
+
+    .modal-foot {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .modal-foot .btn {
+      flex: 1;
+      justify-content: center;
+      padding: 13px;
+    }
+
+    /* ══════════════════════════════════════
+   TOAST
+══════════════════════════════════════ */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(14px);
+      background: var(--navy2);
+      border: 1px solid var(--border2);
+      color: var(--white);
+      padding: 12px 26px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: var(--shadow2);
+      z-index: 2000;
+      opacity: 0;
+      transition: all .3s var(--ease);
+      pointer-events: none;
+      white-space: nowrap;
+      max-width: 90vw;
+    }
+
+    #toast.on {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #toast.ok {
+      border-color: rgba(34, 197, 94, .4);
+      color: #4ade80;
+    }
+
+    #toast.err {
+      border-color: rgba(224, 62, 62, .4);
+      color: #f87171;
+    }
+
+    #toast.inf {
+      border-color: rgba(42, 90, 255, .4);
+      color: var(--blue3);
+    }
+
+    /* ══════════════════════════════════════
+   CHAT WIDGET
+══════════════════════════════════════ */
+    #chat-widget {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      z-index: 800;
+    }
+
+    #chat-fab {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+      color: white;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 22px rgba(42, 90, 255, .55);
+      transition: all .25s var(--ease);
+      position: relative;
+    }
+
+    #chat-fab:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 28px rgba(42, 90, 255, .7);
+    }
+
+    #chat-fab.open {
+      background: linear-gradient(135deg, #374151, #4b5563);
+    }
+
+    .unread-badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: var(--red);
+      font-size: 10px;
+      font-weight: 800;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--navy);
+      color: white;
+    }
+
+    .unread-badge.show {
+      display: flex;
+    }
+
+    #chat-box {
+      display: none;
+      position: absolute;
+      bottom: 68px;
+      left: 0;
+      width: 780px;
+      height: 510px;
+      background: var(--navy2);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      box-shadow: var(--shadow2);
+      overflow: hidden;
+    }
+
+    #chat-box.open {
+      display: flex;
+      animation: chatBoxIn .25s var(--ease);
+    }
+
+    @keyframes chatBoxIn {
+      from {
+        transform: translateY(14px);
+        opacity: 0;
+      }
+
+      to {
+        transform: none;
+        opacity: 1;
+      }
+    }
+
+    .chat-layout {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .chat-sidebar {
+      width: 250px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border);
+      background: rgba(0, 0, 0, .22);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 2;
+    }
+
+    .csb-head {
+      padding: 14px 16px;
+      background: linear-gradient(135deg, var(--navy), var(--navy2));
+      border-bottom: 1px solid var(--border);
+      font-family: 'Cairo', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 48px;
+    }
+
+    .csb-mobile-back {
+      display: none;
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      min-height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border2);
+      background: rgba(255, 255, 255, .07);
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 14px;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .18s var(--ease);
+    }
+
+    .csb-mobile-back:hover {
+      background: rgba(255, 255, 255, .18);
+      color: var(--white);
+    }
+
+    .csb-search {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .csb-search input {
+      width: 100%;
+      background: rgba(255, 255, 255, .07);
+      border: 1.5px solid var(--border);
+      border-radius: 18px;
+      padding: 8px 13px;
+      color: white;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 13px;
+      transition: border-color .2s var(--ease);
+      min-height: 38px;
+      box-sizing: border-box;
+    }
+
+    .csb-search input:focus {
+      outline: none;
+      border-color: var(--blue2);
+    }
+
+    .csb-search input::placeholder {
+      color: var(--text3);
+    }
+
+    /* Filter pills */
+    .csb-filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding: 8px 12px 9px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .csb-filter-pill {
+      flex: 1;
+      min-width: 0;
+      padding: 5px 6px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border2);
+      background: rgba(255, 255, 255, .05);
+      color: var(--text2);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      text-align: center;
+      transition: all .18s var(--ease);
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .csb-filter-pill:hover {
+      background: rgba(255, 255, 255, .1);
+      color: var(--white);
+    }
+
+    .csb-filter-pill.active {
+      background: rgba(42, 90, 255, .22);
+      border-color: var(--blue3);
+      color: var(--white);
+    }
+
+    /* New Chat button */
+    .csb-new-chat-wrap {
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .csb-new-chat {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      padding: 9px 14px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+      color: white;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all .22s var(--ease);
+      box-shadow: 0 2px 10px rgba(42, 90, 255, .35);
+      min-height: 40px;
+      white-space: nowrap;
+    }
+
+    .csb-new-chat:hover {
+      box-shadow: 0 4px 18px rgba(42, 90, 255, .55);
+      filter: brightness(1.08);
+    }
+
+    .csb-new-chat:active {
+      filter: none;
+      box-shadow: 0 2px 10px rgba(42, 90, 255, .35);
+    }
+
+    .friends-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 0;
+      min-height: 0;
+    }
+
+    .friend {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all .18s var(--ease);
+      border-right: 3px solid transparent;
+    }
+
+    .friend:hover {
+      background: rgba(255, 255, 255, .05);
+    }
+
+    .friend.active {
+      background: rgba(42, 90, 255, .15);
+      border-right-color: var(--blue2);
+    }
+
+    .f-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cairo', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      background: linear-gradient(135deg, var(--blue2), var(--gold));
+      overflow: hidden;
+      position: relative;
+    }
+
+    .f-avatar img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      border-radius: 50%;
+      display: block;
+    }
+
+    .f-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .f-status {
+      font-size: 11px;
+      color: var(--teal);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .f-status::before {
+      content: '●';
+      font-size: 7px;
+    }
+
+    /* Chat main */
+    .chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1;
+      position: relative;
+    }
+
+    .chat-header {
+      padding: 14px 18px;
+      background: linear-gradient(135deg, var(--navy), var(--navy2));
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .ch-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ch-name {
+      font-weight: 700;
+      font-size: 14.5px;
+    }
+
+    .ch-sub {
+      font-size: 11px;
+      color: var(--teal);
+    }
+
+    .ch-close {
+      width: 34px;
+      height: 34px;
+      min-width: 34px;
+      min-height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, .08);
+      color: white;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s var(--ease);
+      flex-shrink: 0;
+    }
+
+    .ch-close:hover {
+      background: rgba(224, 62, 62, .3);
+    }
+
+    .ch-contacts-btn {
+      display: none;
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      min-height: 36px;
+      border-radius: 9px;
+      border: 1.5px solid var(--border2);
+      background: rgba(255, 255, 255, .07);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all .18s var(--ease);
+    }
+
+    .ch-contacts-btn:hover {
+      background: rgba(255, 255, 255, .16);
+      border-color: var(--blue3);
+    }
+
+    .chat-no-sel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      color: var(--text3);
+    }
+
+    .chat-no-sel .big {
+      font-size: 50px;
+      opacity: .35;
+    }
+
+    .chat-no-sel p {
+      font-size: 15px;
+    }
+
+    #chat-msgs {
+      flex: 1;
+      padding: 16px 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(0, 0, 0, .12);
+    }
+
+    /* Message bubbles */
+    .msg-row {
+      display: flex;
+    }
+
+    .msg-row.me {
+      justify-content: flex-start;
+    }
+
+    .msg-row.you {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: 70%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 13.5px;
+      line-height: 1.55;
+      word-break: break-word;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .3);
+    }
+
+    .msg-row.me .bubble {
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-row.you .bubble {
+      background: rgba(255, 255, 255, .1);
+      color: white;
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg-time {
+      font-size: 10px;
+      color: rgba(255, 255, 255, .4);
+      margin-top: 4px;
+    }
+
+    .msg-img {
+      max-width: 220px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 6px;
+      display: block;
+      transition: opacity .2s;
+    }
+
+    .msg-img:hover {
+      opacity: .85;
+    }
+
+    .audio-pill {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(0, 0, 0, .25);
+      padding: 9px 13px;
+      border-radius: 10px;
+      margin-top: 5px;
+    }
+
+    .audio-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .22);
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s var(--ease);
+    }
+
+    .audio-btn:hover {
+      background: rgba(255, 255, 255, .38);
+      box-shadow: 0 0 0 2px rgba(91, 130, 255, .4);
+    }
+
+    .audio-label {
+      font-size: 12.5px;
+      color: rgba(255, 255, 255, .75);
+    }
+
+    /* Input */
+    .chat-input-area {
+      padding: 12px 16px;
+      background: var(--navy2);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      position: relative;
+    }
+
+    .media-btns {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .media-btn {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border2);
+      background: rgba(255, 255, 255, .06);
+      cursor: pointer;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s var(--ease);
+    }
+
+    .media-btn:hover {
+      background: rgba(255, 255, 255, .14);
+      border-color: var(--blue3);
+      box-shadow: 0 0 0 2px rgba(91, 130, 255, .25);
+    }
+
+    #msg-input {
+      flex: 1;
+      background: rgba(255, 255, 255, .07);
+      border: 1.5px solid var(--border2);
+      border-radius: 18px;
+      padding: 9px 15px;
+      color: white;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 13.5px;
+      resize: none;
+      min-height: 36px;
+      max-height: 90px;
+      transition: border-color .2s var(--ease);
+    }
+
+    #msg-input:focus {
+      outline: none;
+      border-color: var(--blue2);
+    }
+
+    #msg-input::placeholder {
+      color: var(--text3);
+    }
+
+    #send-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+      color: white;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .22s var(--ease);
+      flex-shrink: 0;
+    }
+
+    #send-btn:hover {
+      box-shadow: 0 4px 18px rgba(42, 90, 255, .65);
+    }
+
+    /* ══════════════════════════════════════
+   CHAT ENHANCEMENTS
+══════════════════════════════════════ */
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 16px 16px 16px 4px;
+      width: fit-content;
+      max-width: 70px;
+    }
+
+    .typing-indicator span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .55);
+      animation: typingDot 1.4s infinite ease-in-out;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: .2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation-delay: .4s;
+    }
+
+    @keyframes typingDot {
+
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+        opacity: .4;
+      }
+
+      30% {
+        transform: translateY(-6px);
+        opacity: 1;
+      }
+    }
+
+    /* Message status ticks */
+    .msg-status {
+      font-size: 10px;
+      color: rgba(255, 255, 255, .45);
+      margin-top: 3px;
+      text-align: left;
+    }
+
+    .msg-status.sent {
+      color: rgba(255, 255, 255, .4);
+    }
+
+    .msg-status.delivered {
+      color: rgba(255, 255, 255, .65);
+    }
+
+    .msg-status.read {
+      color: var(--teal);
+    }
+
+    /* Avatar palette by index */
+    .f-avatar-0 {
+      background: linear-gradient(135deg, #2a5aff, #f5a623);
+    }
+
+    .f-avatar-1 {
+      background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    }
+
+    .f-avatar-2 {
+      background: linear-gradient(135deg, #10b981, #2a5aff);
+    }
+
+    .f-avatar-3 {
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+    }
+
+    /* Smooth bubble animation */
+    .bubble {
+      animation: bubbleIn .18s var(--ease);
+    }
+
+    @keyframes bubbleIn {
+      from {
+        transform: scale(.92);
+        opacity: 0;
+      }
+
+      to {
+        transform: none;
+        opacity: 1;
+      }
+    }
+
+    /* Emoji picker row (predefined reactions) */
+    .emoji-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .emoji-btn {
+      background: rgba(255, 255, 255, .07);
+      border: 1.5px solid var(--border2);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all .18s var(--ease);
+    }
+
+    .emoji-btn:hover {
+      background: rgba(255, 255, 255, .18);
+      transform: scale(1.15);
+    }
+
+    /* You label */
+    .ch-you-label {
+      padding: 7px 14px;
+      font-size: 12px;
+      color: var(--text2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ══════════════════════════════════════
+   SCROLLBAR
+══════════════════════════════════════ */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, .14);
+      border-radius: 10px;
+    }
+
+    /* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+    @media (max-width:820px) {
+      #chat-box {
+        width: calc(100vw - 32px);
+        height: calc(100vh - 130px);
+        bottom: 70px;
+      }
+
+      .chat-sidebar {
+        width: 200px;
+      }
+    }
+
+    @media (max-width:640px) {
+      .hamburger {
+        display: flex;
+      }
+
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        gap: 0;
+        list-style: none;
+        position: fixed;
+        top: 62px;
+        right: 0;
+        bottom: 0;
+        width: 270px;
+        background: var(--navy2);
+        border-left: 1px solid var(--border2);
+        padding: 16px 0;
+        overflow-y: auto;
+        z-index: 890;
+      }
+
+      .nav-links.open {
+        display: flex;
+        animation: sideIn .25s var(--ease);
+      }
+
+      @keyframes sideIn {
+        from {
+          transform: translateX(100%);
+        }
+
+        to {
+          transform: none;
+        }
+      }
+
+      .nav-link {
+        width: 100%;
+        padding: 12px 22px;
+        border-radius: 0;
+      }
+
+      .dd-menu {
+        position: static;
+        box-shadow: none;
+        border: none;
+        background: rgba(0, 0, 0, .2);
+        border-radius: 0;
+      }
+
+      .dd-link {
+        padding-right: 36px;
+      }
+
+      .chat-sidebar {
+        display: none;
+      }
+
+      .chat-sidebar.sb-open {
+        display: flex;
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        width: 100%;
+        background: var(--navy2);
+        animation: sbSlideIn .22s var(--ease);
+      }
+
+      @keyframes sbSlideIn {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      .ch-contacts-btn {
+        display: flex;
+        min-width: 44px;
+        min-height: 44px;
+        width: 44px;
+        height: 44px;
+      }
+
+      .csb-mobile-back {
+        display: flex;
+        min-width: 40px;
+        min-height: 40px;
+        width: 40px;
+        height: 40px;
+      }
+
+      .ch-close {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
+        font-size: 20px;
+      }
+
+      /* Filter pills — taller touch targets on mobile */
+      .csb-filter-pill {
+        min-height: 34px;
+        font-size: 12px;
+      }
+
+      /* New Chat button — touch-friendly */
+      .csb-new-chat {
+        min-height: 44px;
+        font-size: 13.5px;
+      }
+
+      #chat-fab {
+        bottom: 16px;
+        left: 16px;
+      }
+
+      #chat-box {
+        left: 8px;
+        right: 8px;
+        margin: 0;
+        width: auto;
+        bottom: 76px;
+        height: min(480px, calc(100svh - 92px));
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .chat-header {
+        padding: 10px 14px;
+        gap: 8px;
+      }
+
+      .chat-input-area {
+        padding: 10px 12px;
+      }
+
+      .input-row {
+        gap: 6px;
+        align-items: center;
+      }
+
+      .media-btn {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
+      }
+
+      #msg-input {
+        min-height: 40px;
+        min-width: 0;
+        font-size: 13px;
+      }
+
+      #send-btn {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
+      }
+
+      .bubble {
+        max-width: 88%;
+        font-size: 13px;
+      }
+
+      @supports (padding-bottom: env(safe-area-inset-bottom)) {
+        #chat-fab {
+          bottom: max(16px, calc(10px + env(safe-area-inset-bottom)));
+        }
+
+        #chat-box {
+          bottom: max(76px, calc(72px + env(safe-area-inset-bottom)));
+        }
+
+        .chat-input-area {
+          padding-bottom: max(10px, env(safe-area-inset-bottom));
+        }
+      }
+    }
+
+    @media (max-width:420px) {
+      .home-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .video-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .input-row {
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .media-btns {
+        order: 1;
+        width: 100%;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      #msg-input {
+        order: 2;
+        flex: 1;
+        min-width: 0;
+      }
+
+      #send-btn {
+        order: 3;
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+      }
+
+      .media-btn {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+      }
+
+      .bubble {
+        max-width: 92%;
+      }
+
+      .csb-filter-pills {
+        gap: 4px;
+        padding: 7px 10px 8px;
+      }
+
+      .csb-filter-pill {
+        font-size: 11px;
+        padding: 5px 4px;
+        min-height: 32px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Backgrounds -->
+  <div class="bg-canvas">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+  <div class="bg-grid"></div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <!-- ══════════════════ NAVBAR ══════════════════ -->
+  <nav id="navbar">
+    <div class="nav-inner">
+
+      <!-- Admin area (left side in RTL = right visually) -->
+      <div class="nav-admin">
+        <div class="admin-badge" id="admin-badge">✅ مسؤول</div>
+        <button id="admin-login-btn" onclick="handleAdminBtn()">🔐 دخول المسؤول</button>
+      </div>
+
+      <!-- Brand -->
+      <div class="brand" onclick="nav('home')">
+        <div class="brand-logo">📚</div>
+        <div class="brand-name">مدارك <span>التعليمية</span></div>
+      </div>
+
+      <!-- Nav links -->
+      <ul class="nav-links" id="nav-links">
+        <li><button class="nav-link active" id="nl-home" onclick="nav('home');closeMenu()">🏠 الرئيسية</button></li>
+        <li class="nav-dd">
+          <button class="nav-link" id="nl-lessons">📖 الدروس ▾</button>
+          <div class="dd-menu">
+            <a class="dd-link" id="nl-video" onclick="nav('video');closeMenu()">🎬 شرح بالفيديو</a>
+            <a class="dd-link" id="nl-pdf" onclick="nav('pdf');closeMenu()">📄 تحميل PDF</a>
+          </div>
+        </li>
+        <li><button class="nav-link" id="nl-ex" onclick="nav('exercises');closeMenu()">📝 سلاسل التمارين</button></li>
+        <li><button class="nav-link" id="nl-tests" onclick="nav('tests');closeMenu()">📋 الامتحانات</button></li>
+      </ul>
+
+      <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="قائمة">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ══════════════════ MAIN ══════════════════ -->
+  <main>
+    <div id="page"></div>
+  </main>
+
+  <!-- ══════════════════ MODALS ══════════════════ -->
+
+  <!-- Admin Login -->
+  <div class="overlay" id="m-login">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-head">
+        <span class="micon">🔐</span>
+        <h3>تسجيل دخول المسؤول</h3>
+        <p>أدخل بيانات الدخول للوصول إلى لوحة التحكم</p>
+      </div>
+      <div class="form-field">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="l-email" placeholder="admin@example.com" autocomplete="email" />
+      </div>
+      <div class="form-field">
+        <label>كلمة المرور</label>
+        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" onclick="doLogin()">🚀 تسجيل الدخول</button>
+        <button class="btn btn-ghost" onclick="closeM('m-login')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Video -->
+  <div class="overlay" id="m-video">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="micon">🎬</span>
+        <h3>إضافة فيديو جديد</h3>
+      </div>
+      <div class="form-field">
+        <label>رابط YouTube <span style="color:var(--red)">*</span></label>
+        <input type="url" id="f-vurl" placeholder="https://www.youtube.com/watch?v=..." />
+        <p class="field-hint">يدعم روابط youtube.com و youtu.be</p>
+      </div>
+      <div class="form-field">
+        <label>عنوان الفيديو <span style="color:var(--red)">*</span></label>
+        <input type="text" id="f-vtitle" placeholder="أدخل عنوان الفيديو" />
+      </div>
+      <div class="form-field">
+        <label>وصف الفيديو</label>
+        <textarea id="f-vdesc" placeholder="وصف مختصر للدرس..."></textarea>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" onclick="submitVideo()">➕ إضافة الفيديو</button>
+        <button class="btn btn-ghost" onclick="closeM('m-video')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload PDF -->
+  <div class="overlay" id="m-pdf">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="micon">📄</span>
+        <h3>رفع ملف PDF</h3>
+      </div>
+      <div class="form-field">
+        <label>ملف PDF <span style="color:var(--red)">*</span></label>
+        <input type="file" id="f-pfile" accept=".pdf,application/pdf" />
+        <p class="field-hint">الحد الأقصى للحجم: 20 ميجابايت</p>
+      </div>
+      <div class="form-field">
+        <label>عنوان الملف <span style="color:var(--red)">*</span></label>
+        <input type="text" id="f-ptitle" placeholder="أدخل عنوان الملف" />
+      </div>
+      <div class="form-field">
+        <label>وصف الملف</label>
+        <textarea id="f-pdesc" placeholder="وصف مختصر..."></textarea>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" onclick="submitPDF()">📤 رفع الملف</button>
+        <button class="btn btn-ghost" onclick="closeM('m-pdf')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Exercise -->
+  <div class="overlay" id="m-ex">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="micon">📝</span>
+        <h3>إضافة سلسلة تمارين</h3>
+      </div>
+      <div class="form-field">
+        <label>ملف PDF (اختياري)</label>
+        <input type="file" id="f-exfile" accept=".pdf,application/pdf" />
+      </div>
+      <div class="form-field">
+        <label>العنوان <span style="color:var(--red)">*</span></label>
+        <input type="text" id="f-extitle" placeholder="مثال: سلسلة تمارين - الأعداد الكسرية" />
+      </div>
+      <div class="form-field">
+        <label>الوصف</label>
+        <textarea id="f-exdesc" placeholder="وصف السلسلة..."></textarea>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" onclick="submitExercise()">➕ إضافة</button>
+        <button class="btn btn-ghost" onclick="closeM('m-ex')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Test -->
+  <div class="overlay" id="m-test">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="micon">📋</span>
+        <h3>إضافة امتحان تجريبي</h3>
+      </div>
+      <div class="form-field">
+        <label>ملف PDF (اختياري)</label>
+        <input type="file" id="f-testfile" accept=".pdf,application/pdf" />
+      </div>
+      <div class="form-field">
+        <label>عنوان الامتحان <span style="color:var(--red)">*</span></label>
+        <input type="text" id="f-testtitle" placeholder="مثال: امتحان الفصل الأول - الرياضيات" />
+      </div>
+      <div class="form-field">
+        <label>الوصف</label>
+        <textarea id="f-testdesc" placeholder="وصف الامتحان..."></textarea>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" onclick="submitTest()">➕ إضافة</button>
+        <button class="btn btn-ghost" onclick="closeM('m-test')">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat — opens the new Socket.io React SPA -->
+  <button id="chat-fab" type="button" aria-label="فتح الدردشة" aria-expanded="false" title="الدردشة">💬</button>
+
+
+
+  <!-- ══════════════════ JAVASCRIPT ══════════════════ -->
+  <script>
+    'use strict';
+
+    /* ─────────── CREDENTIALS ─────────── */
+    const CREDS = { email: 'anynhfm75@gmail.com', pass: 'achraf1258' };
+
+    /* ─────────── STATE ─────────── */
+    let isAdmin = false;
+    let curSection = 'home';
+    let chatOpen = false;
+    let selFriend = null;
+    let menuOpen = false;
+    let activeFilter = 'all'; // 'all' | 'text' | 'image' | 'audio'
+
+    const friends = [
+      { id: 1, name: 'محمد أحمد', av: 'م' },
+      { id: 2, name: 'فاطمة الزهراء', av: 'ف' },
+      { id: 3, name: 'عمر خالد', av: 'ع' },
+      { id: 4, name: 'سارة علي', av: 'س' },
+    ];
+
+    let convos = {};
+    friends.forEach(f => { convos[f.id] = []; });
+
+    /* Pre-seeded data */
+    let videos = [
+      { id: 'KOKfZKowOaI', title: 'Droites dans le plan : parallélisme et perpendicularité', desc: 'شرح درس الخطوط في المستوى: التوازي والعمودية' },
+      { id: '34KkBOpkx2Y', title: 'Droites dans le plan : suite', desc: 'تكملة شرح درس الخطوط في المستوى' },
+    ];
+    let pdfs = [
+      { title: 'الخطوط في المستوى: التوازي والعمودية', desc: 'PDF - Droites dans le plan', url: null },
+      { title: 'المستقيمات الهامة في مثلث', desc: 'PDF - Droites remarquables du triangle', url: null },
+    ];
+    let exercises = [
+      { title: 'سلسلة تمارين 1: الأعداد الكسرية', desc: 'تمارين متنوعة حول الأعداد الكسرية - السنة الأولى إعدادي', url: null },
+    ];
+    let tests = [
+      { title: 'امتحان تجريبي في الرياضيات', desc: 'امتحان الفصل الأول - السنة الأولى إعدادي', url: null },
+    ];
+
+    /* ─────────── TOAST ─────────── */
+    let _toastT;
+    function toast(msg, type = 'ok') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'on ' + type;
+      clearTimeout(_toastT);
+      _toastT = setTimeout(() => { el.className = ''; }, 3400);
+    }
+
+    /* ─────────── MODALS ─────────── */
+    function openM(id) { document.getElementById(id).classList.add('open'); }
+    function closeM(id) { document.getElementById(id).classList.remove('open'); }
+
+    document.querySelectorAll('.overlay').forEach(o => {
+      o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
+    });
+
+    /* ─────────── ADMIN AUTH ─────────── */
+    function handleAdminBtn() {
+      if (isAdmin) doLogout(); else openM('m-login');
+    }
+
+    function doLogin() {
+      const email = document.getElementById('l-email').value.trim();
+      const pass = document.getElementById('l-pass').value;
+      if (email === CREDS.email && pass === CREDS.pass) {
+        isAdmin = true;
+        document.getElementById('l-email').value = '';
+        document.getElementById('l-pass').value = '';
+        closeM('m-login');
+        updateAdminUI();
+        toast('✅ مرحبًا! تم تسجيل الدخول بنجاح');
+        render();
+      } else {
+        toast('❌ البريد الإلكتروني أو كلمة المرور غير صحيحة', 'err');
+        document.getElementById('l-pass').value = '';
+        document.getElementById('l-pass').focus();
+      }
+    }
+
+    function doLogout() {
+      if (!confirm('هل تريد تسجيل الخروج من لوحة التحكم؟')) return;
+      isAdmin = false;
+      updateAdminUI();
+      toast('تم تسجيل الخروج', 'inf');
+      render();
+    }
+
+    function updateAdminUI() {
+      const btn = document.getElementById('admin-login-btn');
+      const badge = document.getElementById('admin-badge');
+      if (isAdmin) {
+        btn.textContent = '🚪 تسجيل الخروج';
+        btn.classList.add('logout');
+        badge.classList.add('show');
+        document.body.classList.add('admin-active');
+      } else {
+        btn.textContent = '🔐 دخول المسؤول';
+        btn.classList.remove('logout');
+        badge.classList.remove('show');
+        document.body.classList.remove('admin-active');
+      }
+    }
+
+    /* ─────────── NAVIGATION ─────────── */
+    const NAV_MAP = {
+      home: 'nl-home', video: 'nl-video', pdf: 'nl-pdf',
+      exercises: 'nl-ex', tests: 'nl-tests'
+    };
+
+    function nav(section) {
+      curSection = section;
+      Object.entries(NAV_MAP).forEach(([s, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('active', s === section);
+      });
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function render() {
+      const p = document.getElementById('page');
+      p.style.animation = 'none'; p.offsetHeight; p.style.animation = '';
+      if (curSection === 'home') renderHome();
+      else if (curSection === 'video') renderVideos();
+      else if (curSection === 'pdf') renderPDFs();
+      else if (curSection === 'exercises') renderExercises();
+      else if (curSection === 'tests') renderTests();
+    }
+
+    /* ─────────── HOME ─────────── */
+    function renderHome() {
+      document.getElementById('page').innerHTML = `
+    <div class="home-hero">
+      <div class="home-badge">🎓 الأولى إعدادي · مدارك التعليمية</div>
+      <h1>منصتك التعليمية الشاملة</h1>
+      <p>كل ما تحتاجه من دروس، تمارين، وامتحانات تجريبية في مكان واحد</p>
+      <div class="home-grid">
+        <div class="home-card" onclick="nav('video')">
+          <span class="hc-icon">🎬</span>
+          <div class="hc-title">شرح بالفيديو</div>
+          <div class="hc-count">${videos.length} فيديو</div>
+        </div>
+        <div class="home-card" onclick="nav('pdf')">
+          <span class="hc-icon">📄</span>
+          <div class="hc-title">تحميل PDF</div>
+          <div class="hc-count">${pdfs.length} ملف</div>
+        </div>
+        <div class="home-card" onclick="nav('exercises')">
+          <span class="hc-icon">📝</span>
+          <div class="hc-title">سلاسل التمارين</div>
+          <div class="hc-count">${exercises.length} سلسلة</div>
+        </div>
+        <div class="home-card" onclick="nav('tests')">
+          <span class="hc-icon">📋</span>
+          <div class="hc-title">الامتحانات التجريبية</div>
+          <div class="hc-count">${tests.length} امتحان</div>
+        </div>
+      </div>
+    </div>`;
+    }
+
+    /* ─────────── VIDEOS ─────────── */
+    function renderVideos() {
+      const adminBar = isAdmin ? `
+    <div class="admin-bar">
+      <span class="admin-bar-label">🛡 وضع المسؤول</span>
+      <button class="btn btn-primary btn-sm" onclick="openM('m-video')">➕ إضافة فيديو جديد</button>
+      <button class="btn btn-danger  btn-sm" onclick="doLogout()">🚪 تسجيل الخروج</button>
+    </div>` : '';
+
+      const cards = videos.length
+        ? videos.map((v, i) => `
+        <div class="vid-card" onclick="openVideo('${v.id}')">
+          <div class="vid-thumb">
+            <img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg"
+                 alt="${esc(v.title)}" loading="lazy"
+                 onerror="this.src='';this.parentElement.style.background='linear-gradient(135deg,#1a2a5a,#0f1a35)'">
+            <div class="vid-play"></div>
+          </div>
+          <button class="vid-del" onclick="event.stopPropagation();delVideo(${i})" title="حذف">🗑</button>
+          <div class="vid-info">
+            <div class="vid-title">${esc(v.title)}</div>
+            <div class="vid-desc">${esc(v.desc)}</div>
+          </div>
+        </div>`).join('')
+        : `<div class="empty" style="grid-column:1/-1">
+         <span class="empty-icon">🎬</span><p>لا توجد فيديوهات بعد.<br>${isAdmin ? 'أضف أول فيديو باستخدام الزر أعلاه.' : ''}</p>
+       </div>`;
+
+      document.getElementById('page').innerHTML = `
+    <div class="sec-header">
+      <div class="sec-icon">🎬</div>
+      <h2>شرح بالفيديو</h2>
+      <span class="sec-count">${videos.length}</span>
+    </div>
+    ${adminBar}
+    <div class="video-grid">${cards}</div>`;
+    }
+
+    function openVideo(id) {
+      window.open(`https://www.youtube.com/watch?v=${id}`, '_blank');
+    }
+
+    function submitVideo() {
+      const url = document.getElementById('f-vurl').value.trim();
+      const title = document.getElementById('f-vtitle').value.trim();
+      const desc = document.getElementById('f-vdesc').value.trim();
+      if (!url || !title) { toast('❌ الرجاء تعبئة الحقول المطلوبة', 'err'); return; }
+      const id = extractYTID(url);
+      if (!id) { toast('❌ رابط YouTube غير صحيح. تحقق من الرابط وحاول مرة أخرى.', 'err'); return; }
+      videos.unshift({ id, title, desc: desc || 'درس تعليمي' });
+      ['f-vurl', 'f-vtitle', 'f-vdesc'].forEach(id => { document.getElementById(id).value = ''; });
+      closeM('m-video');
+      toast('✅ تم إضافة الفيديو بنجاح!');
+      renderVideos();
+    }
+
+    function delVideo(i) {
+      if (!confirm('هل تريد حذف هذا الفيديو نهائيًا؟')) return;
+      videos.splice(i, 1);
+      toast('تم حذف الفيديو', 'inf');
+      renderVideos();
+    }
+
+    function extractYTID(url) {
+      const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+      return m ? m[1] : null;
+    }
+
+    /* ─────────── PDFs ─────────── */
+    function renderPDFs() {
+      const adminBar = isAdmin ? `
+    <div class="admin-bar">
+      <span class="admin-bar-label">🛡 وضع المسؤول</span>
+      <button class="btn btn-primary btn-sm" onclick="openM('m-pdf')">📤 رفع ملف PDF</button>
+      <button class="btn btn-danger  btn-sm" onclick="doLogout()">🚪 تسجيل الخروج</button>
+    </div>` : '';
+
+      const items = pdfs.length
+        ? pdfs.map((p, i) => `
+        <div class="doc-item">
+          <div class="doc-icon pdf">📄</div>
+          <div class="doc-body">
+            <div class="doc-title">${esc(p.title)}</div>
+            <div class="doc-desc">${esc(p.desc)}</div>
+          </div>
+          <div class="doc-actions">
+            ${p.url
+            ? `<a href="${p.url}" download="${esc(p.title)}.pdf" class="btn-download">⬇ تحميل</a>`
+            : `<span class="btn-coming">قريبًا…</span>`}
+            <button class="doc-del" onclick="delPDF(${i})" title="حذف">🗑</button>
+          </div>
+        </div>`).join('')
+        : `<div class="empty"><span class="empty-icon">📄</span><p>لا توجد ملفات PDF بعد.</p></div>`;
+
+      document.getElementById('page').innerHTML = `
+    <div class="sec-header">
+      <div class="sec-icon">📄</div>
+      <h2>تحميل PDF</h2>
+      <span class="sec-count">${pdfs.length}</span>
+    </div>
+    ${adminBar}
+    <div class="doc-list">${items}</div>`;
+    }
+
+    function submitPDF() {
+      const file = document.getElementById('f-pfile').files[0];
+      const title = document.getElementById('f-ptitle').value.trim();
+      const desc = document.getElementById('f-pdesc').value.trim();
+      if (!title) { toast('❌ أدخل عنوان الملف', 'err'); return; }
+      let url = null;
+      if (file) {
+        if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) { toast('❌ يجب أن يكون الملف من نوع PDF', 'err'); return; }
+        if (file.size > 20 * 1024 * 1024) { toast('❌ حجم الملف يتجاوز 20 ميجابايت', 'err'); return; }
+        url = URL.createObjectURL(file);
+      }
+      pdfs.unshift({ title, desc: desc || 'ملف درس', url });
+      ['f-pfile', 'f-ptitle', 'f-pdesc'].forEach(id => { document.getElementById(id).value = ''; });
+      closeM('m-pdf');
+      toast(`✅ تم رفع "${title}" بنجاح!`);
+      renderPDFs();
+    }
+
+    function delPDF(i) {
+      if (!confirm('هل تريد حذف هذا الملف؟')) return;
+      pdfs.splice(i, 1);
+      toast('تم الحذف', 'inf');
+      renderPDFs();
+    }
+
+    /* ─────────── EXERCISES ─────────── */
+    function renderExercises() {
+      const adminBar = isAdmin ? `
+    <div class="admin-bar">
+      <span class="admin-bar-label">🛡 وضع المسؤول</span>
+      <button class="btn btn-primary btn-sm" onclick="openM('m-ex')">➕ إضافة سلسلة</button>
+      <button class="btn btn-danger  btn-sm" onclick="doLogout()">🚪 تسجيل الخروج</button>
+    </div>` : '';
+
+      const items = exercises.length
+        ? exercises.map((ex, i) => `
+        <div class="doc-item">
+          <div class="doc-icon ex">📝</div>
+          <div class="doc-body">
+            <div class="doc-title">${esc(ex.title)}</div>
+            <div class="doc-desc">${esc(ex.desc)}</div>
+          </div>
+          <div class="doc-actions">
+            ${ex.url
+            ? `<a href="${ex.url}" download="${esc(ex.title)}.pdf" class="btn-download">⬇ تحميل</a>`
+            : `<span class="btn-coming">قريبًا…</span>`}
+            <button class="doc-del" onclick="delExercise(${i})" title="حذف">🗑</button>
+          </div>
+        </div>`).join('')
+        : `<div class="empty"><span class="empty-icon">📝</span><p>لا توجد سلاسل بعد.</p></div>`;
+
+      document.getElementById('page').innerHTML = `
+    <div class="sec-header">
+      <div class="sec-icon">📝</div>
+      <h2>سلاسل التمارين</h2>
+      <span class="sec-count">${exercises.length}</span>
+    </div>
+    ${adminBar}
+    <div class="doc-list">${items}</div>`;
+    }
+
+    function submitExercise() {
+      const file = document.getElementById('f-exfile').files[0];
+      const title = document.getElementById('f-extitle').value.trim();
+      const desc = document.getElementById('f-exdesc').value.trim();
+      if (!title) { toast('❌ أدخل عنوان السلسلة', 'err'); return; }
+      const url = file ? URL.createObjectURL(file) : null;
+      exercises.unshift({ title, desc: desc || 'سلسلة تمارين', url });
+      ['f-exfile', 'f-extitle', 'f-exdesc'].forEach(id => { document.getElementById(id).value = ''; });
+      closeM('m-ex');
+      toast('✅ تم إضافة السلسلة بنجاح!');
+      renderExercises();
+    }
+
+    function delExercise(i) {
+      if (!confirm('هل تريد حذف هذه السلسلة؟')) return;
+      exercises.splice(i, 1);
+      toast('تم الحذف', 'inf');
+      renderExercises();
+    }
+
+    /* ─────────── TESTS ─────────── */
+    function renderTests() {
+      const adminBar = isAdmin ? `
+    <div class="admin-bar">
+      <span class="admin-bar-label">🛡 وضع المسؤول</span>
+      <button class="btn btn-primary btn-sm" onclick="openM('m-test')">➕ إضافة امتحان</button>
+      <button class="btn btn-danger  btn-sm" onclick="doLogout()">🚪 تسجيل الخروج</button>
+    </div>` : '';
+
+      const items = tests.length
+        ? tests.map((t, i) => `
+        <div class="doc-item">
+          <div class="doc-icon test">📋</div>
+          <div class="doc-body">
+            <div class="doc-title">${esc(t.title)}</div>
+            <div class="doc-desc">${esc(t.desc)}</div>
+          </div>
+          <div class="doc-actions">
+            ${t.url
+            ? `<a href="${t.url}" download="${esc(t.title)}.pdf" class="btn-download">⬇ تحميل</a>`
+            : `<span class="btn-coming">قريبًا…</span>`}
+            <button class="doc-del" onclick="delTest(${i})" title="حذف">🗑</button>
+          </div>
+        </div>`).join('')
+        : `<div class="empty"><span class="empty-icon">📋</span><p>لا توجد امتحانات بعد.</p></div>`;
+
+      document.getElementById('page').innerHTML = `
+    <div class="sec-header">
+      <div class="sec-icon">📋</div>
+      <h2>الامتحانات التجريبية</h2>
+      <span class="sec-count">${tests.length}</span>
+    </div>
+    ${adminBar}
+    <div class="doc-list">${items}</div>`;
+    }
+
+    function submitTest() {
+      const file = document.getElementById('f-testfile').files[0];
+      const title = document.getElementById('f-testtitle').value.trim();
+      const desc = document.getElementById('f-testdesc').value.trim();
+      if (!title) { toast('❌ أدخل عنوان الامتحان', 'err'); return; }
+      const url = file ? URL.createObjectURL(file) : null;
+      tests.unshift({ title, desc: desc || 'امتحان تجريبي', url });
+      ['f-testfile', 'f-testtitle', 'f-testdesc'].forEach(id => { document.getElementById(id).value = ''; });
+      closeM('m-test');
+      toast('✅ تم إضافة الامتحان بنجاح!');
+      renderTests();
+    }
+
+    function delTest(i) {
+      if (!confirm('هل تريد حذف هذا الامتحان؟')) return;
+      tests.splice(i, 1);
+      toast('تم الحذف', 'inf');
+      renderTests();
+    }
+
+    /* ─────────── MENU ─────────── */
+    function toggleMenu() {
+      menuOpen = !menuOpen;
+      document.getElementById('nav-links').classList.toggle('open', menuOpen);
+    }
+    function closeMenu() {
+      menuOpen = false;
+      document.getElementById('nav-links').classList.remove('open');
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#nav-links') && !e.target.closest('#hamburger')) closeMenu();
+    });
+
+    /* ─────────── CHAT ─────────── */
+    function toggleChat() {
+      chatOpen = !chatOpen;
+      const box = document.getElementById('chat-box');
+      const fab = document.getElementById('chat-fab');
+      box.classList.toggle('open', chatOpen);
+      fab.classList.toggle('open', chatOpen);
+      if (chatOpen) renderFriends();
+    }
+
+
+
+    function filterFriends(q) {
+      document.querySelectorAll('.friend').forEach((el, i) => {
+        el.style.display = friends[i].name.includes(q) ? '' : 'none';
+      });
+    }
+
+    function selF(id) {
+      selFriend = friends.find(f => f.id === id);
+      renderFriends();
+      renderChatMain();
+      // Close sidebar overlay on mobile after contact selection
+      const sb = document.getElementById('chat-sidebar');
+      if (sb) sb.classList.remove('sb-open');
+    }
+
+    function toggleSidebar() {
+      const sb = document.getElementById('chat-sidebar');
+      if (sb) sb.classList.toggle('sb-open');
+    }
+
+    // Wire up the back button inside the sidebar
+    document.addEventListener('DOMContentLoaded', function () {
+      const back = document.getElementById('csb-back');
+      if (back) back.addEventListener('click', function () {
+        const sb = document.getElementById('chat-sidebar');
+        if (sb) sb.classList.remove('sb-open');
+      });
+      // Filter pills
+      const filtersEl = document.getElementById('csb-filters');
+      if (filtersEl) filtersEl.addEventListener('click', function (e) {
+        const pill = e.target.closest('.csb-filter-pill');
+        if (!pill) return;
+        filtersEl.querySelectorAll('.csb-filter-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        activeFilter = pill.getAttribute('data-filter') || 'all';
+        renderMsgs();
+      });
+      // New Chat button
+      const newChatBtn = document.getElementById('csb-new-chat');
+      if (newChatBtn) newChatBtn.addEventListener('click', function () {
+        // Clear selection and show the no-selection screen
+        selFriend = null;
+        renderFriends();
+        document.getElementById('chat-main').innerHTML = `
+      <div class="chat-no-sel">
+        <span class="big">💬</span>
+        <p>اختر صديقًا لبدء المحادثة</p>
+      </div>`;
+        // On mobile: show sidebar so user can pick a contact
+        const sb = document.getElementById('chat-sidebar');
+        if (sb) sb.classList.add('sb-open');
+      });
+    });
+
+    function renderChatMain() {
+      const fi = friends.findIndex(f => f.id === selFriend.id);
+      const avBg = ['linear-gradient(135deg,#2a5aff,#f5a623)', 'linear-gradient(135deg,#8b5cf6,#3b82f6)',
+        'linear-gradient(135deg,#10b981,#2a5aff)', 'linear-gradient(135deg,#f59e0b,#ef4444)'][fi % 4] || 'linear-gradient(135deg,var(--blue2),var(--gold))';
+      document.getElementById('chat-main').innerHTML = `
+    <div class="chat-header">
+      <button class="ch-contacts-btn" onclick="toggleSidebar()" aria-label="عرض المحادثات" title="المحادثات">&#9776;</button>
+      <div class="ch-info">
+        <div class="f-avatar" style="width:34px;height:34px;font-size:13px;background:${avBg}">${selFriend.av}</div>
+        <div>
+          <div class="ch-name">${selFriend.name}</div>
+          <div class="ch-sub">🟢 متصل الآن</div>
+        </div>
+      </div>
+      <button class="ch-close" onclick="clearSel()">×</button>
+    </div>
+    <div id="chat-msgs"></div>
+    <div class="chat-input-area">
+      <div class="input-row">
+        <div class="media-btns">
+          <button class="media-btn" onclick="document.getElementById('img-pick').click()" title="إرسال صورة">🖼️</button>
+          <button class="media-btn" onclick="document.getElementById('aud-pick').click()" title="إرسال صوت">🎵</button>
+        </div>
+        <textarea id="msg-input" placeholder="اكتب رسالتك…" rows="1"></textarea>
+        <button id="send-btn" onclick="sendMsg()">➤</button>
+      </div>
+      <div class="emoji-row">
+        <button class="emoji-btn" onclick="sendQuick('👍')">👍</button>
+        <button class="emoji-btn" onclick="sendQuick('❤️')">❤️</button>
+        <button class="emoji-btn" onclick="sendQuick('😂')">😂</button>
+        <button class="emoji-btn" onclick="sendQuick('🌟')">🌟</button>
+        <button class="emoji-btn" onclick="sendQuick('👏')">👏</button>
+        <button class="emoji-btn" onclick="sendQuick('حسنًا 👌')">حسنًا</button>
+      </div>
+    </div>`;
+
+      document.getElementById('msg-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+      });
+      document.getElementById('msg-input').addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 90) + 'px';
+      });
+      renderMsgs();
+    }
+
+    function clearSel() {
+      selFriend = null;
+      renderFriends();
+      document.getElementById('chat-main').innerHTML = `
+    <div class="chat-no-sel">
+      <span class="big">💬</span>
+      <p>اختر صديقًا لبدء المحادثة</p>
+    </div>`;
+    }
+
+    function renderMsgs() {
+      const msgs = convos[selFriend.id] || [];
+      const filtered = activeFilter === 'all' ? msgs : msgs.filter(m => m.type === activeFilter);
+      const c = document.getElementById('chat-msgs');
+      if (!c) return;
+      c.innerHTML = filtered.length
+        ? filtered.map(m => buildBubble(m)).join('')
+        : `<div style="text-align:center;color:var(--text3);padding:30px;font-size:13px">${activeFilter === 'all' ? 'ابدأ المحادثة 👋' : 'لا توجد رسائل من هذا النوع'
+        }</div>`;
+      c.scrollTop = c.scrollHeight;
+    }
+
+    function buildBubble(m) {
+      const cls = m.from === 'me' ? 'me' : 'you';
+      let inner = '';
+      if (m.type === 'text') inner = `<div>${esc(m.text)}</div>`;
+      if (m.type === 'image') inner = `<img src="${m.url}" class="msg-img" onclick="window.open('${m.url}','_blank')" alt="صورة">`;
+      if (m.type === 'audio') inner = `
+        <div class="audio-pill">
+          <button class="audio-btn" onclick="(new Audio('${m.url}')).play()">▶</button>
+          <span class="audio-label">رسالة صوتية</span>
+        </div>`;
+      /* Delivery tick for sent messages */
+      const foot = m.from === 'me'
+        ? `<div class="msg-status ${m.status || 'sent'}">${m.status === 'read' ? '✓✓' : m.status === 'delivered' ? '✓✓' : '✓'} ${m.time}</div>`
+        : `<div class="msg-time">${m.time}</div>`;
+      return `<div class="msg-row ${cls}"><div class="bubble">${inner}${foot}</div></div>`;
+    }
+
+    /* Quick emoji shortcut */
+    function sendQuick(text) {
+      if (!selFriend) return;
+      push({ from: 'me', type: 'text', text, time: now(), status: 'sent' });
+      scheduleReply();
+    }
+
+    function sendMsg() {
+      const input = document.getElementById('msg-input');
+      const text = input?.value.trim();
+      if (!text || !selFriend) return;
+      push({ from: 'me', type: 'text', text, time: now(), status: 'sent' });
+      input.value = '';
+      input.style.height = '';
+      scheduleReply();
+    }
+
+    /* Typing indicator → simulated reply → mark messages as read */
+    function scheduleReply() {
+      setTimeout(() => {
+        const c = document.getElementById('chat-msgs');
+        if (!c) return;
+        /* Show typing dots */
+        const typingRow = document.createElement('div');
+        typingRow.className = 'msg-row you';
+        typingRow.id = 'typing-row';
+        typingRow.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+        c.appendChild(typingRow);
+        c.scrollTop = c.scrollHeight;
+        const replyDelay = 900 + Math.random() * 700;
+        setTimeout(() => {
+          const tr = document.getElementById('typing-row');
+          if (tr) tr.remove();
+          const REPLIES = [
+            'حسنًا 👍', 'شكرًا على تواصلك! 😊', 'سؤال ممتاز! 🌟',
+            'سأبحث في الأمر وأعود إليك 🔍', 'لا بأس 😊',
+            'رائع جدًا! 💯', 'أنا هنا للمساعدة 🎓',
+            'بالتوفيق في دراستك! 📚', 'هل تحتاج مساعدة إضافية؟ 🤝'
+          ];
+          const reply = REPLIES[Math.random() * REPLIES.length | 0];
+          if (selFriend) convos[selFriend.id].push({ from: 'friend', type: 'text', text: reply, time: now() });
+          renderMsgs();
+          /* Mark our sent messages as read */
+          if (selFriend) {
+            convos[selFriend.id].forEach(m => { if (m.from === 'me') m.status = 'read'; });
+            renderMsgs();
+          }
+        }, replyDelay);
+      }, 200);
+    }
+
+    function push(msg) {
+      convos[selFriend.id].push(msg);
+      renderMsgs();
+    }
+
+    /* File picks */
+    document.getElementById('img-pick').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file || !selFriend) { this.value = ''; return; }
+      if (!file.type.startsWith('image/')) { toast('❌ اختر ملف صورة صحيح', 'err'); this.value = ''; return; }
+      if (file.size > 5 * 1024 * 1024) { toast('❌ الصورة أكبر من 5 ميجا', 'err'); this.value = ''; return; }
+      const r = new FileReader();
+      r.onload = e => { push({ from: 'me', type: 'image', url: e.target.result, time: now() }); };
+      r.readAsDataURL(file);
+      this.value = '';
+    });
+
+    document.getElementById('aud-pick').addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file || !selFriend) { this.value = ''; return; }
+      if (!file.type.startsWith('audio/')) { toast('❌ اختر ملف صوت صحيح', 'err'); this.value = ''; return; }
+      if (file.size > 10 * 1024 * 1024) { toast('❌ الملف الصوتي أكبر من 10 ميجا', 'err'); this.value = ''; return; }
+      const r = new FileReader();
+      r.onload = e => { push({ from: 'me', type: 'audio', url: e.target.result, time: now() }); };
+      r.readAsDataURL(file);
+      this.value = '';
+    });
+
+    /* ─────────── UTILS ─────────── */
+    function now() {
+      return new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function esc(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /* ─────────── INIT ─────────── */
+    nav('home');
+  </script>
+  <script src="assets/chat-overlay.js?v=1"></script>
+</body>
+
+</html>

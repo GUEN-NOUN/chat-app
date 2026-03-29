@@ -269,6 +269,19 @@
         a.className = 'dd-link' + (level.id === currentLevel ? ' active' : '');
         a.href = level.file;
         a.textContent = level.title;
+        // ── UTF-8 pre-navigation debug probe ─────────────────────────────────
+        // Fires just before the WebView loads the new level page.
+        // Check Android Logcat (tag: Madarik:Encoding) — if title.charCodes look
+        // correct (Arabic U+0600..U+06FF) here but "?" on the next page, the
+        // corruption is happening in WebView byte-decoding, NOT in JS.
+        a.addEventListener('click', function () {
+          console.log(
+            '[Madarik:Encoding] Before nav | from=' + currentLevel +
+            ' | to=' + level.id +
+            ' | title=' + level.title +
+            ' | charCodes=' + level.title.split('').map(function(c){return c.charCodeAt(0).toString(16);}).join(',')
+          );
+        });
         levelsMenu.appendChild(a);
       });
     }

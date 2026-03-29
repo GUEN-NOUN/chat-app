@@ -1,0 +1,57 @@
+# .gitattributes
+#
+# Forces Git to normalise every text file to LF on commit and to check out
+# files with LF on every platform (including Windows).
+#
+# Why this matters for Arabic text:
+#   Git on Windows defaults to "CRLF checkout / LF commit" (core.autocrlf=true).
+#   If a file is checked out with CRLF and then opened by a tool that reads it
+#   as bytes (e.g. an encoder audit script), the extra 0x0D bytes corrupt byte
+#   counts.  More importantly, if any script ever writes back a checked-out
+#   CRLF file using a text-mode API, it can produce Windows-1252 output on
+#   PowerShell 5.x.  Explicit LF-everywhere eliminates that entire class of bug.
+
+# ── Auto-detect text files and normalise to LF ────────────────────────────
+*          text=auto  eol=lf
+
+# ── Web source files ──────────────────────────────────────────────────────
+*.html     text  eol=lf  encoding=utf-8
+*.htm      text  eol=lf  encoding=utf-8
+*.js       text  eol=lf  encoding=utf-8
+*.mjs      text  eol=lf  encoding=utf-8
+*.css      text  eol=lf  encoding=utf-8
+*.json     text  eol=lf  encoding=utf-8
+*.svg      text  eol=lf  encoding=utf-8
+*.txt      text  eol=lf  encoding=utf-8
+
+# ── Android / Java source files ───────────────────────────────────────────
+*.java     text  eol=lf  encoding=utf-8
+*.kt       text  eol=lf  encoding=utf-8
+*.kts      text  eol=lf  encoding=utf-8
+*.gradle   text  eol=lf
+*.xml      text  eol=lf  encoding=utf-8
+*.properties  text  eol=lf  encoding=utf-8
+
+# ── Documentation ─────────────────────────────────────────────────────────
+*.md       text  eol=lf  encoding=utf-8
+
+# ── PowerShell (Windows PS5 requires CRLF) ────────────────────────────────
+*.ps1      text  eol=crlf
+*.psm1     text  eol=crlf
+*.psd1     text  eol=crlf
+
+# ── Binary assets — Git must never touch line endings ─────────────────────
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.gif      binary
+*.webp     binary
+*.ico      binary
+*.pdf      binary
+*.zip      binary
+*.jar      binary
+*.aar      binary
+*.keystore binary
+*.apk      binary
+*.aab      binary
+*.class    binary

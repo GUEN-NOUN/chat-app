@@ -276,6 +276,9 @@
       '<div class="home-badge">🎓 ' + Utils.esc(levelTitle) + ' · مدارك التعليمية</div>' +
       '<h1>منصتك التعليمية الشاملة</h1>' +
       '<p>كل ما تحتاجه من دروس، تمارين، وامتحانات تجريبية في مكان واحد</p>' +
+      '<div class="hero-video-3d"><div class="hero-video-frame">' +
+      '<video autoplay muted loop playsinline><source src="/assets/intro.mp4" type="video/mp4"></video>' +
+      '</div></div>' +
       '<div class="home-grid">' +
       '<div class="home-card" data-section="video"><span class="hc-icon">🎬</span><div class="hc-title">شرح بالفيديو</div><div class="hc-count">' + (v ? v.length : 0) + ' فيديو</div></div>' +
       '<div class="home-card" data-section="pdf"><span class="hc-icon">📄</span><div class="hc-title">تحميل PDF</div><div class="hc-count">' + (p ? p.length : 0) + ' ملف</div></div>' +
@@ -343,10 +346,38 @@
     bindAdminBarEvents('m-video');
     page.querySelectorAll('.vid-card[data-video-id]').forEach(function (card) {
       card.addEventListener('click', function (e) {
-        if (e.target.closest('.vid-del')) return;
+        if (e.target.closest('.vid-del') || e.target.closest('.lesson-chat-btn')) return;
         var id = card.getAttribute('data-video-id');
         if (id) window.open('https://www.youtube.com/watch?v=' + id, '_blank');
       });
+    });
+    // Inject lesson-chat buttons on each video card
+    page.querySelectorAll('.vid-card[data-video-id]').forEach(function (card) {
+      var vid = card.getAttribute('data-video-id');
+      if (!vid) return;
+      var level = (App.getCurrentLevel && App.getCurrentLevel()) || 'level';
+      var threadId = 'lesson:' + level + '_' + vid;
+      var titleEl = card.querySelector('.vid-title');
+      var displayName = (titleEl ? titleEl.textContent : 'فيديو');
+      var infoEl = card.querySelector('.vid-info');
+      if (infoEl) appendLessonChatBtn(infoEl, threadId, displayName);
+    });
+    // Subject chat buttons in sidebar / subject area
+    page.querySelectorAll('.subject-item[data-subject]').forEach(function (el) {
+      var subjectId = el.getAttribute('data-subject');
+      if (!subjectId || subjectId === 'all') return;
+      var level = (App.getCurrentLevel && App.getCurrentLevel()) || 'level';
+      var threadId = 'subj:' + level + '_' + subjectId;
+      var label = el.textContent.trim();
+      var chatSpan = document.createElement('span');
+      chatSpan.title = 'دردشة المادة: ' + label;
+      chatSpan.style.cssText = 'margin-right:4px;cursor:pointer;font-size:13px;opacity:0.7';
+      chatSpan.textContent = '💬';
+      chatSpan.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openLessonChat(threadId, 'دردشة ' + label);
+      });
+      el.appendChild(chatSpan);
     });
     page.querySelectorAll('.vid-del').forEach(function (btn) {
       btn.addEventListener('click', function (e) {
@@ -575,6 +606,48 @@
     else if (section === 'tests') renderTests();
   }
 
+  /* ── Inline Lesson/Subject Chat ─────────────────────────────────────
+   * Opens the global chat widget pre-selected to a lesson or subject
+   * thread.  Thread key: 'subj:<id>' or 'lesson:<level>_<docId>'
+   * Called from lesson cards and video cards in the rendered HTML.
+   * ─────────────────────────────────────────────────────────────────── */
+  function openLessonChat(threadId, displayName) {
+    if (!window.Chat) return;
+    if (!window.Chat.hasChatUser()) {
+      if (window.Modals) window.Modals.open('m-chat-username');
+      return;
+    }
+    var me = window.Chat.getChatUser();
+    // Ensure thread exists in convos
+    window.Chat.initRoom(threadId); // initRoom only creates for user threads; we handle special keys here
+    try {
+      var raw = localStorage.getItem(window.APP_CONFIG.STORAGE_KEYS.CHAT_CONVOS);
+      var convos = raw ? JSON.parse(raw) : {};
+      if (!convos[threadId]) {
+        convos[threadId] = [];
+        localStorage.setItem(window.APP_CONFIG.STORAGE_KEYS.CHAT_CONVOS, JSON.stringify(convos));
+      }
+    } catch (e) {}
+    // Open chat and select the thread
+    window.Chat.openWith({ id: threadId, nickname: displayName, online: true });
+  }
+
+  /* ── Inject "💬 دردشة الدرس" button on each doc/video card ───────── */
+  function appendLessonChatBtn(container, threadId, displayName) {
+    if (!container) return;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-ghost btn-sm lesson-chat-btn';
+    btn.innerHTML = '💬 دردشة الدرس';
+    btn.title = 'فتح دردشة ' + displayName;
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      openLessonChat(threadId, displayName);
+    });
+    container.appendChild(btn);
+  }
+
   window.Pages = {
     render: render,
     submitVideo: submitVideo,
@@ -582,6 +655,7 @@
     submitExercise: submitExercise,
     submitTest: submitTest,
     getSubjects: getSubjects,
-    resetSubjectFilter: function () { activeSubject = 'all'; }
+    resetSubjectFilter: function () { activeSubject = 'all'; },
+    openLessonChat: openLessonChat
   };
 })();

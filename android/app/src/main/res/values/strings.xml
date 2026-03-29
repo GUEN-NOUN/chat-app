@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <!-- App display name shown on home screen, recent apps, and notifications -->
+    <string name="app_name">\u0645\u062f\u0627\u0631\u0643 \u0627\u0644\u062a\u0639\u0644\u064a\u0645\u064a\u0629</string>
+    <string name="title_activity_main">\u0645\u062f\u0627\u0631\u0643 \u0627\u0644\u062a\u0639\u0644\u064a\u0645\u064a\u0629</string>
+    <!-- Package identifiers used by Capacitor deep-link scheme -->
+    <string name="package_name">com.match.chat</string>
+    <string name="custom_url_scheme">com.match.chat</string>
+</resources>

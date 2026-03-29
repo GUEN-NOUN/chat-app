@@ -7,8 +7,22 @@
  */
 window.APP_CONFIG = {
   APP_VERSION: window.APP_VERSION || '3',
-  CREDS: { email: 'achraf1258@gmail.com', pass: 'achraf1258' },
+  /* ── SECURITY FIX: credentials removed from frontend ─────────────────
+     Auth is now handled server-side via /api/auth endpoints.
+     See server/auth.js + server/db.js for JWT-based authentication.
+  ──────────────────────────────────────────────────────────────────── */
+  API_URL: window.Capacitor?.isNativePlatform?.()
+    ? 'http://192.168.5.1:3000'
+    : (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:3000'
+      : '',   // same-origin in production
+  WS_URL: window.Capacitor?.isNativePlatform?.()
+    ? 'ws://192.168.5.1:3000'
+    : (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'ws://localhost:3000'
+      : ('wss://' + location.host),
   STORAGE_KEYS: {
+    // ── Existing keys (unchanged) ─────────────────────────────────────────
     ADMIN: 'madarik_admin_session',
     CHAT_USER: 'madarik_chat_user',
     CHAT_CONVOS: 'madarik_chat_convos',
@@ -19,7 +33,32 @@ window.APP_CONFIG = {
     VIDEOS: 'madarik_videos',
     PDF_LIST: 'madarik_pdf_list',
     EXERCISES_LIST: 'madarik_exercises_list',
-    TESTS_LIST: 'madarik_tests_list'
+    TESTS_LIST: 'madarik_tests_list',
+
+    // ── RBAC / Admin system (new) ─────────────────────────────────────────
+    // Maps userId → { role, assignedBy, assignedAt }
+    ADMIN_ROLES: 'madarik_admin_roles',
+    // Hashed admin credentials array stored on first login bootstrap
+    ADMIN_CREDENTIALS: 'madarik_admin_credentials',
+    // Append-only admin action log: { id, ts, adminId, adminRole, action, targetId, details }
+    AUDIT_LOGS: 'madarik_audit_logs',
+    // User-submitted content reports: { id, ts, status, reporterId, targetUserId, ... }
+    REPORTS: 'madarik_reports',
+    // Maps userId → { status:'suspended'|'banned', reason, by, at, until }
+    USER_SUSPENSIONS: 'madarik_suspensions',
+
+    // ── Friend system ─────────────────────────────────────────────────────
+    // { sent: [userId], received: [userId], accepted: [userId], rejected: [userId] }
+    FRIENDS: 'madarik_friends',
+
+    // ── Groups ────────────────────────────────────────────────────────────
+    // Array of { id, name, members:[{id,name}], createdBy, createdAt }
+    CHAT_GROUPS: 'madarik_chat_groups',
+
+    // ── Lesson/Subject threaded chat ──────────────────────────────────────
+    // Uses CHAT_CONVOS with special keys: 'subj:SUBJECT_ID' / 'lesson:LESSON_ID'
+    LESSON_CHAT_PREFIX: 'lesson:',
+    SUBJECT_CHAT_PREFIX: 'subj:'
   },
   IDB_NAME: 'MadarikPDFs',
   IDB_VERSION: 1,

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>الدردشة — مدارك</title>
+  <script>
+    // Unregister old service workers that cached a redirect loop
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        regs.forEach(function(r) { r.unregister(); });
+      });
+      if (typeof caches !== 'undefined') {
+        caches.keys().then(function(k) { k.forEach(function(n) { caches.delete(n); }); });
+      }
+    }
+  </script>
+</head>
+<body>
+  <p style="text-align:center;margin-top:40vh;font-family:sans-serif;font-size:1.2em">
+    جارٍ تحميل الدردشة...
+  </p>
+</body>
+</html>

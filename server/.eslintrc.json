@@ -1,0 +1,12 @@
+{
+  "env": { "node": true, "es2021": true },
+  "extends": "eslint:recommended",
+  "parserOptions": { "ecmaVersion": 2022 },
+  "rules": {
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-unused-vars": "warn",
+    "eqeqeq": "error",
+    "no-eval": "error",
+    "no-implied-eval": "error"
+  }
+}
