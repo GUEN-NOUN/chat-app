@@ -6,6 +6,16 @@ server/.env
 # Dependencies
 node_modules/
 server/node_modules/
+client/node_modules/
+
+# Client build output
+client/dist/
+
+# Python virtual environment
+.venv/
+
+# Generated www folder (rebuilt via build-www.ps1)
+www/
 
 # SQLite databases
 server/*.db
