@@ -28,59 +28,80 @@ router.use(requireAdmin);
    - ai: requests today, total ever
    - server: uptime, memory
 ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Pre-compiled admin stats queries (compiled once) ── */
+const _adminStmts = {
+  usersTotal:    db.prepare('SELECT COUNT(*) AS n FROM users'),
+  usersOnline:   db.prepare("SELECT COUNT(*) AS n FROM users WHERE last_seen >= ?"),
+  usersNewToday: db.prepare("SELECT COUNT(*) AS n FROM users WHERE date(created) = ?"),
+  usersBanned:   db.prepare("SELECT COUNT(*) AS n FROM users WHERE status = 'banned'"),
+  usersSuspended: db.prepare("SELECT COUNT(*) AS n FROM users WHERE status = 'suspended'"),
+  msgsTotal:     db.prepare('SELECT COUNT(*) AS n FROM chat_messages WHERE deleted = 0'),
+  msgsToday:     db.prepare("SELECT COUNT(*) AS n FROM chat_messages WHERE date(ts) = ? AND deleted = 0"),
+  msgsByRoom:    db.prepare(`SELECT cr.name, cr.type, COUNT(cm.id) AS count
+                              FROM chat_messages cm JOIN chat_rooms cr ON cm.room_id = cr.id
+                              WHERE date(cm.ts) = ? AND cm.deleted = 0
+                              GROUP BY cm.room_id ORDER BY count DESC LIMIT 10`),
+  roomsTotal:    db.prepare('SELECT COUNT(*) AS n FROM chat_rooms'),
+  roomsPublic:   db.prepare("SELECT COUNT(*) AS n FROM chat_rooms WHERE type = 'public'"),
+  roomsDm:       db.prepare("SELECT COUNT(*) AS n FROM chat_rooms WHERE type = 'dm'"),
+  roomsGroup:    db.prepare("SELECT COUNT(*) AS n FROM chat_rooms WHERE type = 'group'"),
+  roomsAi:       db.prepare("SELECT COUNT(*) AS n FROM chat_rooms WHERE type = 'ai'"),
+  aiToday:       db.prepare('SELECT COALESCE(SUM(count), 0) AS n FROM ai_usage WHERE date = ?'),
+  aiTotal:       db.prepare('SELECT COALESCE(SUM(count), 0) AS n FROM ai_usage'),
+  aiTopUsers:    db.prepare(`SELECT au.user_id, u.username, au.count FROM ai_usage au
+                              LEFT JOIN users u ON au.user_id = u.id
+                              WHERE au.date = ? ORDER BY au.count DESC LIMIT 5`),
+  recentMsgs:    db.prepare(`SELECT cm.id, cm.room_id, cr.name AS room_name, cm.sender, cm.type, cm.body, cm.ts
+                              FROM chat_messages cm LEFT JOIN chat_rooms cr ON cm.room_id = cr.id
+                              WHERE cm.deleted = 0 ORDER BY cm.ts DESC LIMIT ?`),
+  banUser:       db.prepare("UPDATE users SET status = 'banned' WHERE id = ?"),
+  suspendUser:   db.prepare("UPDATE users SET status = 'suspended' WHERE id = ?"),
+  unbanUser:     db.prepare("UPDATE users SET status = 'active' WHERE id = ?"),
+  deleteMsg:     db.prepare('UPDATE chat_messages SET deleted = 1 WHERE id = ?'),
+};
+
+/* ── Gather all stats in a single implicit transaction (faster reads) ── */
+const _getStats = db.transaction((today, fiveMinAgo) => ({
+  users: {
+    total:     _adminStmts.usersTotal.get().n,
+    online:    _adminStmts.usersOnline.get(fiveMinAgo).n,
+    newToday:  _adminStmts.usersNewToday.get(today).n,
+    banned:    _adminStmts.usersBanned.get().n,
+    suspended: _adminStmts.usersSuspended.get().n,
+  },
+  messages: {
+    total:  _adminStmts.msgsTotal.get().n,
+    today:  _adminStmts.msgsToday.get(today).n,
+    byRoom: _adminStmts.msgsByRoom.all(today),
+  },
+  rooms: {
+    total:  _adminStmts.roomsTotal.get().n,
+    public: _adminStmts.roomsPublic.get().n,
+    dm:     _adminStmts.roomsDm.get().n,
+    group:  _adminStmts.roomsGroup.get().n,
+    ai:     _adminStmts.roomsAi.get().n,
+  },
+  ai: {
+    requestsToday: _adminStmts.aiToday.get(today).n,
+    requestsTotal: _adminStmts.aiTotal.get().n,
+    topUsersToday: _adminStmts.aiTopUsers.all(today),
+  },
+}));
+
 router.get('/stats', (req, res) => {
   try {
-    const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+    const today      = new Date().toISOString().slice(0, 10);
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
-    const stats = {
-      users: {
-        total:   db.prepare('SELECT COUNT(*) AS n FROM users').get().n,
-        online:  db.prepare("SELECT COUNT(*) AS n FROM users WHERE last_seen >= ?").get(fiveMinAgo).n,
-        newToday: db.prepare("SELECT COUNT(*) AS n FROM users WHERE date(created) = ?").get(today).n,
-        banned:  db.prepare("SELECT COUNT(*) AS n FROM users WHERE status = 'banned'").get().n,
-        suspended: db.prepare("SELECT COUNT(*) AS n FROM users WHERE status = 'suspended'").get().n,
-      },
-      messages: {
-        total:   db.prepare('SELECT COUNT(*) AS n FROM chat_messages WHERE deleted = 0').get().n,
-        today:   db.prepare("SELECT COUNT(*) AS n FROM chat_messages WHERE date(ts) = ? AND deleted = 0").get(today).n,
-        byRoom:  db.prepare(`
-          SELECT cr.name, cr.type, COUNT(cm.id) AS count
-          FROM chat_messages cm
-          JOIN chat_rooms cr ON cm.room_id = cr.id
-          WHERE date(cm.ts) = ? AND cm.deleted = 0
-          GROUP BY cm.room_id
-          ORDER BY count DESC
-          LIMIT 10
-        `).all(today),
-      },
-      rooms: {
-        total:  db.prepare('SELECT COUNT(*) AS n FROM chat_rooms').get().n,
-        public: db.prepare("SELECT COUNT(*) AS n FROM chat_rooms WHERE type = 'public'").get().n,
-        dm:     db.prepare("SELECT COUNT(*) AS n FROM chat_rooms WHERE type = 'dm'").get().n,
-        group:  db.prepare("SELECT COUNT(*) AS n FROM chat_rooms WHERE type = 'group'").get().n,
-        ai:     db.prepare("SELECT COUNT(*) AS n FROM chat_rooms WHERE type = 'ai'").get().n,
-      },
-      ai: {
-        requestsToday: db.prepare('SELECT COALESCE(SUM(count), 0) AS n FROM ai_usage WHERE date = ?').get(today).n,
-        requestsTotal: db.prepare('SELECT COALESCE(SUM(count), 0) AS n FROM ai_usage').get().n,
-        topUsersToday: db.prepare(`
-          SELECT au.user_id, u.username, au.count
-          FROM ai_usage au
-          LEFT JOIN users u ON au.user_id = u.id
-          WHERE au.date = ?
-          ORDER BY au.count DESC
-          LIMIT 5
-        `).all(today),
-      },
-      server: {
-        uptimeSeconds: Math.floor(process.uptime()),
-        memoryMB:      Math.round(process.memoryUsage().rss / 1024 / 1024),
-        nodeVersion:   process.version,
-        env:           process.env.NODE_ENV || 'development',
-      },
-      ts: new Date().toISOString(),
+    const stats = _getStats(today, fiveMinAgo);
+    stats.server = {
+      uptimeSeconds: Math.floor(process.uptime()),
+      memoryMB:      Math.round(process.memoryUsage().rss / 1024 / 1024),
+      nodeVersion:   process.version,
+      env:           process.env.NODE_ENV || 'development',
     };
+    stats.ts = new Date().toISOString();
 
     res.json({ ok: true, stats });
   } catch (err) {
@@ -128,14 +149,7 @@ router.get('/users', (req, res) => {
 router.get('/messages/recent', (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 20, 100);
-    const msgs  = db.prepare(`
-      SELECT cm.id, cm.room_id, cr.name AS room_name, cm.sender, cm.type, cm.body, cm.ts
-      FROM chat_messages cm
-      LEFT JOIN chat_rooms cr ON cm.room_id = cr.id
-      WHERE cm.deleted = 0
-      ORDER BY cm.ts DESC
-      LIMIT ?
-    `).all(limit);
+    const msgs  = _adminStmts.recentMsgs.all(limit);
     res.json({ ok: true, messages: msgs });
   } catch (err) {
     res.status(500).json({ ok: false, error: 'Failed to fetch messages' });
@@ -148,17 +162,17 @@ router.get('/messages/recent', (req, res) => {
    POST /api/admin/users/:id/unban
 ══════════════════════════════════════════════════════════════════════════════ */
 router.post('/users/:id/ban', (req, res) => {
-  db.prepare("UPDATE users SET status = 'banned' WHERE id = ?").run(req.params.id);
+  _adminStmts.banUser.run(req.params.id);
   res.json({ ok: true });
 });
 
 router.post('/users/:id/suspend', (req, res) => {
-  db.prepare("UPDATE users SET status = 'suspended' WHERE id = ?").run(req.params.id);
+  _adminStmts.suspendUser.run(req.params.id);
   res.json({ ok: true });
 });
 
 router.post('/users/:id/unban', (req, res) => {
-  db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(req.params.id);
+  _adminStmts.unbanUser.run(req.params.id);
   res.json({ ok: true });
 });
 
@@ -166,7 +180,7 @@ router.post('/users/:id/unban', (req, res) => {
    DELETE /api/admin/messages/:id
 ══════════════════════════════════════════════════════════════════════════════ */
 router.delete('/messages/:id', (req, res) => {
-  db.prepare('UPDATE chat_messages SET deleted = 1 WHERE id = ?').run(req.params.id);
+  _adminStmts.deleteMsg.run(req.params.id);
   res.json({ ok: true });
 });
 

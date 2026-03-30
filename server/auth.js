@@ -15,11 +15,13 @@ const express   = require('express');
 const jwt       = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const { findAdmin, verifyPassword } = require('./db');
+// Import JWT_SECRET from middleware/auth — single source of truth so admin
+// tokens and chat tokens share the same secret and can cross-verify.
+const { JWT_SECRET } = require('./middleware/auth');
 
 const router = express.Router();
 
 /* ── JWT config ── */
-const JWT_SECRET  = process.env.JWT_SECRET || require('crypto').randomBytes(48).toString('hex');
 const JWT_EXPIRES = '2h';
 const COOKIE_NAME = 'madarik_token';
 const COOKIE_OPTS = {

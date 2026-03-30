@@ -34,7 +34,17 @@ router.post('/', requireAuth, (req, res) => {
 router.get('/:id', requireAuth, (req, res) => {
   const room = getRoomById(req.params.id);
   if (!room) return res.status(404).json({ ok: false, error: 'Room not found' });
+
   const members = getRoomMembers(req.params.id);
+
+  // ACL: non-public rooms are visible only to members (admins bypass this check)
+  if (room.type !== 'public' && !req.user.role) {
+    const userId = req.user.userId || req.user.id;
+    if (!members.some(m => m.id === userId)) {
+      return res.status(403).json({ ok: false, error: 'Access denied: not a member of this room' });
+    }
+  }
+
   return res.json({ ok: true, room, members });
 });
 

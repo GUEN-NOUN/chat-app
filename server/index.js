@@ -39,6 +39,7 @@ const chatsRouter                     = require('./routes/chats');
 const messagesRouter                  = require('./routes/messages');
 const agentsRouter                    = require('./routes/agents');
 const adminRouter                     = require('./routes/admin');
+const orientationRouter               = require('./routes/orientation');
 
 // Realtime
 const { attachSocket } = require('./socket/index');
@@ -115,7 +116,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use(cookieParser());
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '1mb' }));
 
 /* ── API routes ───────────────────────────────────────────────────────────── */
 app.use('/api/auth',     authRouter);
@@ -123,8 +124,9 @@ app.use('/api/upload',   uploadRouter);
 app.use('/api/users',    usersRouter);
 app.use('/api/chats',    chatsRouter);
 app.use('/api/messages', messagesRouter);
-app.use('/api/agents',   agentsRouter);
-app.use('/api/admin',    adminRouter);
+app.use('/api/agents',      agentsRouter);
+app.use('/api/admin',       adminRouter);
+app.use('/api/orientation', orientationRouter);
 
 /* ── Uploads static serving ───────────────────────────────────────────────── */
 // In production with Docker+nginx, nginx serves /uploads/ directly.
@@ -155,9 +157,19 @@ app.get('/sw.js', (_req, res) => {
 const CHAT_DIST = path.join(__dirname, '..', 'www', 'chat');
 app.use('/chat', express.static(CHAT_DIST, {
   index: 'index.html',
+  etag: true,
+  lastModified: true,
   setHeaders(res, fp) {
-    // Never cache HTML — always fetch fresh from server
-    if (fp.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    if (fp.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else if (/\.[a-f0-9]{8}\.(js|css)$/.test(fp) || /assets\//.test(fp)) {
+      // Hashed Vite assets — immutable forever cache
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    } else if (/\.(js|css)$/.test(fp)) {
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    } else if (/\.(woff2?|ttf|eot|svg|png|jpg|webp|ico)$/.test(fp)) {
+      res.setHeader('Cache-Control', 'public, max-age=604800');
+    }
   }
 }));
 
@@ -172,9 +184,16 @@ const WWW_ROOT = path.join(__dirname, '..', 'www');
 app.use(express.static(WWW_ROOT, {
   extensions: ['html'],
   index: 'index.html',
+  etag: true,
+  lastModified: true,
   setHeaders(res, fp) {
-    if (fp.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    if (fp.endsWith('sw.js'))  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    if (fp.endsWith('.html') || fp.endsWith('sw.js')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else if (/\.(js|css)$/.test(fp)) {
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    } else if (/\.(woff2?|ttf|eot|svg|png|jpg|webp|ico|gif)$/.test(fp)) {
+      res.setHeader('Cache-Control', 'public, max-age=604800');
+    }
   }
 }));
 
@@ -186,7 +205,16 @@ const server = http.createServer(app);
 const io     = new Server(server, {
   cors: corsOptions,
   transports: ['websocket', 'polling'],
-  path: '/socket.io'
+  path: '/socket.io',
+  /* ── Socket.io performance tuning ── */
+  pingInterval: 25000,      // keep-alive every 25s (default)
+  pingTimeout:  20000,      // wait 20s before disconnect
+  maxHttpBufferSize: 1e6,   // 1 MB max message (prevents abuse)
+  perMessageDeflate: {      // compress WebSocket frames
+    threshold: 1024,        // only compress messages > 1 KB
+    zlibDeflateOptions: { level: 6 },
+  },
+  httpCompression: true,    // compress HTTP long-polling
 });
 /* ── Optional Redis adapter (set REDIS_URL to enable) ────────────────────── */
 if (process.env.REDIS_URL) {

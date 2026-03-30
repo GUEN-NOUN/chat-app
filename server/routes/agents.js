@@ -34,7 +34,7 @@ router.get('/:id', requireAuth, (req, res) => {
 router.post('/', requireAdmin, (req, res) => {
   const { name, description, avatar, provider, model, system_prompt, api_key_env, capabilities } = req.body || {};
   if (!name || !provider) return res.status(400).json({ ok: false, error: 'name and provider required' });
-  const allowed = ['openai', 'gemini', 'custom'];
+  const allowed = ['openai', 'gemini', 'openrouter', 'auto', 'custom'];
   if (!allowed.includes(provider)) return res.status(400).json({ ok: false, error: 'Invalid provider' });
 
   const agent = createAgent({

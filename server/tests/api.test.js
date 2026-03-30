@@ -62,11 +62,11 @@ async function run() {
     failed++;
   }
 
-  // ── /api/auth/chat-token ──────────────────────────────────────────────────
-  console.warn('\n[POST /api/auth/chat-token]');
+  // ── /api/users/register ───────────────────────────────────────────────────
+  console.warn('\n[POST /api/users/register]');
   try {
     // Valid request
-    const r1 = await request('POST', '/api/auth/chat-token', {
+    const r1 = await request('POST', '/api/users/register', {
       deviceId: 'test-device-001',
       username: 'TestUser'
     });
@@ -76,12 +76,12 @@ async function run() {
     assert('token has 3 parts (JWT)', r1.body.token && r1.body.token.split('.').length === 3);
 
     // Missing deviceId
-    const r2 = await request('POST', '/api/auth/chat-token', { username: 'Test' });
+    const r2 = await request('POST', '/api/users/register', { username: 'Test' });
     assert('status 400 on missing deviceId', r2.status === 400);
 
-    // deviceId too short
-    const r3 = await request('POST', '/api/auth/chat-token', { deviceId: 'ab', username: 'Test' });
-    assert('status 400 on short deviceId', r3.status === 400);
+    // Missing username
+    const r3 = await request('POST', '/api/users/register', { deviceId: 'test-device-002' });
+    assert('status 400 on missing username', r3.status === 400);
   } catch (e) {
     console.error('  ERROR', e.message);
     failed++;

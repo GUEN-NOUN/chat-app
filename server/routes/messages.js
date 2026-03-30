@@ -4,40 +4,43 @@ const fs      = require('fs');
 const path    = require('path');
 const express = require('express');
 const { requireAuth } = require('../middleware/auth');
-const { getMessages, toggleReaction, getReactions, deleteMessage, getMessageById } = require('../db');
+const { getMessages, toggleReaction, getReactions, getBulkReactions, deleteMessage, getMessageById } = require('../db');
 
 const router = express.Router();
 
-function annotateMedia(messages) {
+const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
+
+/** M1 — async file-existence check (non-blocking, no event-loop stall) */
+async function annotateMedia(messages) {
   if (!Array.isArray(messages)) return messages;
-  return messages.map(m => {
+  return Promise.all(messages.map(async m => {
     if (!m.media_url) return m;
     try {
-      const filename = path.basename(m.media_url);
-      const filePath = path.join(__dirname, '..', 'uploads', filename);
-      if (!fs.existsSync(filePath)) {
-        return { ...m, media_missing: true };
-      }
+      const filePath = path.join(UPLOAD_DIR, path.basename(m.media_url));
+      await fs.promises.access(filePath, fs.constants.F_OK);
+      return m;
     } catch {
       return { ...m, media_missing: true };
     }
-    return m;
-  });
+  }));
 }
 
 /* GET /api/messages/:roomId?limit=50&before=<ts> */
-router.get('/:roomId', requireAuth, (req, res) => {
+router.get('/:roomId', requireAuth, async (req, res) => {
   const { limit, before } = req.query;
   const messages = getMessages(
     req.params.roomId,
     Math.min(Number(limit) || 50, 100),
     before || null
   );
-  // Attach reactions
-  const enriched = annotateMedia(messages).map(m => ({
-    ...m,
-    reactions: getReactions(m.id)
-  }));
+
+  // M1 — non-blocking media annotation
+  const annotated = await annotateMedia(messages);
+
+  // M2 — single bulk query instead of one query per message
+  const reactionsMap = getBulkReactions(annotated.map(m => m.id));
+  const enriched = annotated.map(m => ({ ...m, reactions: reactionsMap[m.id] || [] }));
+
   return res.json({ ok: true, messages: enriched });
 });
 

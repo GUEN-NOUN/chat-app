@@ -8,6 +8,15 @@
 
 const https = require('https');
 
+/* ── Reusable HTTPS agents (keep-alive = reuse TCP connections) ── */
+const keepAliveAgent = new https.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 30000,
+  maxSockets: 10,
+  maxFreeSockets: 5,
+  timeout: 30000,
+});
+
 /* â”€â”€ LRU-like cache (non-streaming calls only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const cache     = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
@@ -32,7 +41,7 @@ function httpsPost(hostname, path, headers, body) {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(body);
     const req  = https.request(
-      { hostname, path, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), ...headers } },
+      { hostname, path, method: 'POST', agent: keepAliveAgent, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), ...headers } },
       res => {
         let raw = '';
         res.on('data', d => raw += d);
@@ -102,7 +111,7 @@ async function callOpenRouter(agent, message, history) {
     { role: 'user', content: message }
   ];
   const res = await httpsPost('openrouter.ai', '/api/v1/chat/completions',
-    { Authorization: `Bearer ${apiKey}`, 'HTTP-Referer': 'http://localhost:3000', 'X-Title': 'Madarik' },
+    { Authorization: `Bearer ${apiKey}`, 'HTTP-Referer': process.env.SITE_URL || 'http://localhost:3000', 'X-Title': 'Madarik' },
     { model: agent.model || 'openrouter/free', messages, max_tokens: 1024, temperature: 0.7 }
   );
   if (res.status !== 200) throw new Error(`OpenRouter error ${res.status}: ${res.body?.error?.message || ''}`);
@@ -132,6 +141,7 @@ function streamOpenAI(agent, message, history, onChunk) {
 
     const req = https.request({
       hostname: 'api.openai.com', path: '/v1/chat/completions', method: 'POST',
+      agent: keepAliveAgent,
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(payload),
@@ -191,6 +201,7 @@ function streamGemini(agent, message, history, onChunk) {
 
     const req = https.request({
       hostname: 'generativelanguage.googleapis.com', path: apiPath, method: 'POST',
+      agent: keepAliveAgent,
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) }
     }, res => {
       let fullText = '';
@@ -240,11 +251,12 @@ function streamOpenRouter(agent, message, history, onChunk) {
 
     const req = https.request({
       hostname: 'openrouter.ai', path: '/api/v1/chat/completions', method: 'POST',
+      agent: keepAliveAgent,
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(payload),
         'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': 'http://localhost:3000',
+        'HTTP-Referer': process.env.SITE_URL || 'http://localhost:3000',
         'X-Title': 'Madarik'
       }
     }, res => {
