@@ -49,6 +49,13 @@
   // Apply immediately to prevent flash
   apply(get());
 
+  // Bind click handlers once DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
   window.Theme = {
     init: init,
     toggle: toggle,

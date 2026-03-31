@@ -22,7 +22,7 @@ function formatBytes(n) {
 }
 
 export default function MessageInput({ roomId }) {
-  const { sendMessage, sendTyping, activeAgentId, agents } = useChat();
+  const { sendMessage, sendTyping } = useChat();
   const { token }  = useAuth();
   const [text, setText]               = useState('');
   const [showEmoji, setShowEmoji]     = useState(false);
@@ -40,8 +40,6 @@ export default function MessageInput({ roomId }) {
   const recorderRef  = useRef(null);
   const recTimerRef  = useRef(null);
   const chunksRef    = useRef([]);
-
-  const activeAgent = agents.find(a => a.id === activeAgentId);
 
   const handleType = useCallback((e) => {
     setText(e.target.value);
@@ -199,12 +197,6 @@ export default function MessageInput({ roomId }) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {activeAgent && (
-        <div className="active-agent-bar">
-          {activeAgent.avatar} يرد {activeAgent.name} على رسائلك
-        </div>
-      )}
-
       {/* Upload error banner */}
       {uploadError && (
         <div className="upload-error-banner" role="alert">

@@ -9,7 +9,7 @@ import AgentSelector from '../Agents/AgentSelector';
 
 export default function ChatPage() {
   const { user } = useAuth();
-  const { activeRoomId, rooms, agents, messages, typingUsers, loadMore, markRead, connected, activeAgentId, dispatch } = useChat();
+  const { activeRoomId, rooms, messages, typingUsers, loadMore, markRead, connected } = useChat();
   const navigate = useNavigate();
 
   const room = rooms.find(r => r.id === activeRoomId);
@@ -17,16 +17,6 @@ export default function ChatPage() {
   const typing = typingUsers[activeRoomId] || {};
   const bottomRef = useRef(null);
   const listRef = useRef(null);
-
-  // Auto-set active agent when entering an AI room
-  // Use room.description directly — don't wait for agents array to load
-  useEffect(() => {
-    if (!room || room.type !== 'ai') return;
-    const agentId = room.description;
-    if (agentId && agentId !== activeAgentId) {
-      dispatch({ type: 'SET_ACTIVE_AGENT', agentId });
-    }
-  }, [room?.id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -62,7 +52,7 @@ export default function ChatPage() {
           </div>
         </div>
         <div className="chat-page-actions">
-          <AgentSelector />
+          {room?.type === 'ai' && <AgentSelector />}
         </div>
       </header>
 

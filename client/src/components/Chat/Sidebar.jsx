@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useChat } from '../../context/ChatContext';
@@ -10,7 +10,27 @@ export default function Sidebar() {
   const [creating, setCreating] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [search, setSearch] = useState('');
+  const [userResults, setUserResults] = useState([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const debounceRef = useRef(null);
   const navigate = useNavigate();
+
+  // Debounced user search via API
+  const searchUsersApi = useCallback((q) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!q.trim()) { setUserResults([]); setSearchingUsers(false); return; }
+    setSearchingUsers(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await api.searchUsers(q.trim(), token);
+        if (res.ok) setUserResults(res.users || []);
+      } catch { /* ignore */ }
+      setSearchingUsers(false);
+    }, 300);
+  }, [token]);
+
+  useEffect(() => { searchUsersApi(search); }, [search, searchUsersApi]);
+  useEffect(() => { return () => { if (debounceRef.current) clearTimeout(debounceRef.current); }; }, []);
 
   function handleRoomClick(roomId) {
     joinRoom(roomId);
@@ -68,11 +88,39 @@ export default function Sidebar() {
       <div className="sidebar-search">
         <input
           className="sidebar-search-input"
-          placeholder="🔍 بحث في المحادثات..."
+          placeholder="🔍 بحث في المحادثات والمستخدمين..."
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
       </div>
+
+      {/* User search results */}
+      {search.trim() && userResults.length > 0 && (
+        <div className="user-search-results">
+          <div className="section-label">مستخدمون</div>
+          <ul className="room-list">
+            {userResults.filter(u => u.id !== user?.id).map(u => (
+              <li key={u.id} className="room-item user-result" onClick={async () => {
+                // Create or find DM room
+                const res = await api.createRoom({ name: `${user.username} & ${u.username}`, type: 'dm', targetUserId: u.id }, token);
+                if (res.ok && res.room) {
+                  dispatch({ type: 'SET_ROOMS', rooms: [...rooms.filter(r => r.id !== res.room.id), res.room] });
+                  joinRoom(res.room.id);
+                  navigate(`/chat/room/${res.room.id}`);
+                }
+                setSearch('');
+              }}>
+                <div className="room-icon">{u.avatar || '👤'}</div>
+                <div className="room-name-wrap">
+                  <span className="room-name">{u.username}</span>
+                  <small className={`user-status ${u.status}`}>{u.status === 'online' ? '🟢' : '⚫'}</small>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {search.trim() && searchingUsers && <div className="search-loading">جار البحث...</div>}
 
       {/* Rooms */}
       <div className="rooms-section">

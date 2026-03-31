@@ -26,6 +26,15 @@ function reducer(state, action) {
       return { ...state, messages: { ...state.messages, [action.roomId]: [...fresh, ...existing] } };
     }
 
+    // Append new messages to end (used after reconnect to add missed messages)
+    case 'APPEND_MESSAGES': {
+      const existing = state.messages[action.roomId] || [];
+      const existingIds = new Set(existing.map(m => m.id));
+      const fresh = action.messages.filter(m => !existingIds.has(m.id));
+      if (!fresh.length) return state;
+      return { ...state, messages: { ...state.messages, [action.roomId]: [...existing, ...fresh] } };
+    }
+
     case 'ADD_MESSAGE': {
       const msgs = state.messages[action.roomId] || [];
       // Skip if already present (server echo after optimistic add)
@@ -187,11 +196,18 @@ export function ChatProvider({ children }) {
         }).catch(() => {});
       }
       socket.emit('rooms');
-      // Re-join active room to receive missed messages since disconnect
+      // Re-join, passing the last known timestamp so server only sends missed messages
       const activeRoom = stateRef.current?.activeRoomId;
-      if (activeRoom) socket.emit('join', { roomId: activeRoom });
-      // Always re-join public so messages are never missed
-      if (activeRoom !== 'public') socket.emit('join', { roomId: 'public' });
+      if (activeRoom) {
+        const msgs = stateRef.current.messages[activeRoom];
+        const since = msgs?.length ? msgs[msgs.length - 1].ts : null;
+        socket.emit('join', { roomId: activeRoom, since });
+      }
+      if (activeRoom !== 'public') {
+        const pubMsgs = stateRef.current.messages['public'];
+        const since = pubMsgs?.length ? pubMsgs[pubMsgs.length - 1].ts : null;
+        socket.emit('join', { roomId: 'public', since });
+      }
     });
 
     socket.on('auth:ok', () => {
@@ -206,11 +222,12 @@ export function ChatProvider({ children }) {
 
     socket.on('rooms', ({ rooms }) => dispatch({ type: 'SET_ROOMS', rooms }));
 
-    socket.on('history', ({ roomId, messages, hasMore, nextCursor, page }) => {
+    socket.on('history', ({ roomId, messages, hasMore, nextCursor, page, append }) => {
       loadingMore.current.delete(roomId);
       dispatch({ type: 'SET_HAS_MORE', roomId, hasMore: !!hasMore, nextCursor: nextCursor || null });
-      if (page) dispatch({ type: 'PREPEND_MESSAGES', roomId, messages });
-      else      dispatch({ type: 'SET_MESSAGES',     roomId, messages });
+      if (append)  dispatch({ type: 'APPEND_MESSAGES',  roomId, messages });
+      else if (page) dispatch({ type: 'PREPEND_MESSAGES', roomId, messages });
+      else           dispatch({ type: 'SET_MESSAGES',     roomId, messages });
     });
 
     socket.on('message', (msg) => {
@@ -222,6 +239,8 @@ export function ChatProvider({ children }) {
 
     // Optimistic message confirmation
     socket.on('message:ack', ({ clientId, serverId, ts }) => {
+      // Remove clientId so it doesn't accumulate (was added in sendMessage)
+      pendingIds.current.delete(clientId);
       pendingIds.current.add(serverId); // mark serverId so server echo is skipped
       dispatch({ type: 'CONFIRM_MESSAGE', clientId, serverId, ts });
     });
@@ -269,6 +288,9 @@ export function ChatProvider({ children }) {
       socket.off('reaction'); socket.off('typing'); socket.off('typing:stop'); socket.off('presence');
       socket.off('error');
       socket.io.off('reconnect');
+      // Clear all typing debounce timers to prevent state updates after unmount
+      Object.values(typingTimers.current).forEach(clearTimeout);
+      typingTimers.current = {};
     };
   }, [user, token]);
 
@@ -315,12 +337,14 @@ export function ChatProvider({ children }) {
       }
     });
 
+    const currentRoom = state.rooms.find(r => r.id === roomId);
+    const isAiRoom = currentRoom?.type === 'ai';
     socketRef.current.emit('message', {
       id: clientId, roomId, type, body: body.trim(), replyTo,
-      agentId: state.activeAgentId || undefined,
+      ...(isAiRoom ? { agentId: 'workflow' } : {}),
       ...(mediaUrl ? { media_url: mediaUrl, mime } : {})
     });
-  }, [state.activeAgentId, user]);
+  }, [state.rooms, user]);
 
   const sendTyping = useCallback((roomId) => {
     socketRef.current?.emit('typing', { roomId });

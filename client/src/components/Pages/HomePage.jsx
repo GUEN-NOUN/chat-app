@@ -10,7 +10,7 @@ const roomIcons = {
 
 export default function HomePage() {
   const { user, token } = useAuth();
-  const { rooms, agents, joinRoom, connected, dispatch } = useChat();
+  const { rooms, joinRoom, connected, dispatch } = useChat();
   const navigate = useNavigate();
 
   const [search, setSearch]               = useState('');
@@ -77,20 +77,18 @@ export default function HomePage() {
     navigate(`/chat/room/${res.room.id}`);
   }
 
-  // Agent button: find or create AI room for this agent
-  async function handleAgentClick(agent) {
-    // Try to find an existing AI room created for this agent
-    let room = rooms.find(r => r.type === 'ai' && r.description === agent.id);
+  // AI workflow: find or create AI room
+  async function handleAgentClick() {
+    let room = rooms.find(r => r.type === 'ai');
     if (!room) {
       const res = await api.createRoom(
-        { name: agent.name, type: 'ai', description: agent.id },
+        { name: 'المساعد الذكي', type: 'ai', description: 'agent-workflow' },
         token
       );
       if (!res.ok) return;
       room = res.room;
       dispatch({ type: 'SET_ROOMS', rooms: [...rooms, room] });
     }
-    dispatch({ type: 'SET_ACTIVE_AGENT', agentId: agent.id });
     joinRoom(room.id);
     navigate(`/chat/room/${room.id}`);
   }

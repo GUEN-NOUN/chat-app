@@ -13,19 +13,33 @@ export default function ChatWindow() {
   const room    = rooms.find(r => r.id === activeRoomId);
   const msgs    = messages[activeRoomId] || [];
   const typing  = typingUsers[activeRoomId] || {};
-  const bottomRef = useRef(null);
-  const listRef   = useRef(null);
+  const bottomRef    = useRef(null);
+  const listRef      = useRef(null);
+  // Track whether the user is near the bottom — don't auto-scroll if they've scrolled up
+  const isNearBottom = useRef(true);
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom on new messages — only if user is already near bottom
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    // Mark last message as read
+    if (isNearBottom.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    // Always mark last message as read regardless of scroll position
     if (msgs.length) markRead(activeRoomId, msgs[msgs.length - 1].id);
   }, [msgs.length, activeRoomId]);
 
-  // Infinite scroll — load-more when scrolled to top
+  // Reset near-bottom flag when the active room changes (always start at bottom)
+  useEffect(() => {
+    isNearBottom.current = true;
+  }, [activeRoomId]);
+
+  // Infinite scroll — load-more when scrolled near top
   const handleScroll = useCallback(() => {
-    if (listRef.current?.scrollTop === 0 && msgs.length) {
+    const el = listRef.current;
+    if (!el) return;
+    // Update near-bottom flag (80px threshold handles sub-pixel rounding on mobile)
+    isNearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    // Trigger load-more slightly before hitting the very top (5px threshold)
+    if (el.scrollTop < 5 && msgs.length) {
       loadMore(activeRoomId, msgs[0]?.ts);
     }
   }, [msgs, activeRoomId, loadMore]);

@@ -198,7 +198,7 @@ const _stmts = {
                                 ON CONFLICT(id) DO UPDATE SET username=excluded.username, last_seen=datetime('now')`),
   setUserStatus:   db.prepare("UPDATE users SET status=?, last_seen=datetime('now') WHERE id=?"),
   getUser:         db.prepare('SELECT * FROM users WHERE id = ?'),
-  searchUsers:     db.prepare('SELECT id, username, avatar, status, last_seen FROM users WHERE username LIKE ? LIMIT ?'),
+  searchUsers:     db.prepare('SELECT id, username, avatar, status, last_seen FROM users WHERE username LIKE ? OR id LIKE ? LIMIT ?'),
   getAllUsers:      db.prepare('SELECT id, username, avatar, status, last_seen FROM users ORDER BY last_seen DESC LIMIT ?'),
 
   // Rooms
@@ -293,52 +293,35 @@ db.transaction(() => {
     db.prepare("DELETE FROM chat_messages WHERE sender_id IN ('seed_teacher','seed_system')").run();
   } catch { /* ignore */ }
 
-  // Default AI agents
-  const agents = [
-    {
-      id: 'agent-auto', name: 'مساعد ذكي', description: 'يختار أفضل وكيل تلقائياً حسب سؤالك',
-      avatar: '🎯', provider: 'auto', model: '',
-      system_prompt: 'أنت مساعد ذكي يختار الوكيل الأنسب تلقائياً.',
-      api_key_env: '', capabilities: '["text","code","math","analysis","creative"]'
-    },
-    {
-      id: 'agent-gpt', name: 'GPT Assistant', description: 'مساعد AI مدعوم بـ ChatGPT',
-      avatar: '🤖', provider: 'openai', model: 'gpt-4o-mini',
-      system_prompt: 'أنت مساعد تعليمي مفيد يتحدث العربية. تخصصك مساعدة الطلاب المغاربة في دراستهم.',
-      api_key_env: 'OPENAI_API_KEY', capabilities: '["text","code","math","analysis"]'
-    },
-    {
-      id: 'agent-gemini', name: 'Gemini Pro', description: 'مساعد AI مدعوم بـ Google Gemini',
-      avatar: '✨', provider: 'gemini', model: 'gemini-1.5-flash',
-      system_prompt: 'أنت مساعد تعليمي مفيد يتحدث العربية والفرنسية. تخصصك مساعدة الطلاب.',
-      api_key_env: 'GEMINI_API_KEY', capabilities: '["text","reasoning","creative","multilingual"]'
-    },
-    {
-      id: 'agent-gemini-free', name: 'Gemini Flash (مجاني)', description: 'مساعد AI مجاني عبر OpenRouter',
-      avatar: '⚡', provider: 'openrouter', model: 'openrouter/free',
-      system_prompt: 'أنت مساعد تعليمي مفيد يتحدث العربية. تخصصك مساعدة الطلاب المغاربة في دراستهم.',
-      api_key_env: 'OPENROUTER_API_KEY', capabilities: '["text","reasoning","creative","multilingual"]'
-    },
-    {
-      id: 'agent-deepseek-free', name: 'DeepSeek (مجاني)', description: 'مساعد AI مجاني للبرمجة والرياضيات',
-      avatar: '🧠', provider: 'openrouter', model: 'openai/gpt-oss-120b:free',
-      system_prompt: 'أنت مساعد تعليمي مفيد يتحدث العربية. تخصصك مساعدة الطلاب في الرياضيات والبرمجة.',
-      api_key_env: 'OPENROUTER_API_KEY', capabilities: '["text","code","math","analysis"]'
-    },
-    {
-      id: 'agent-llama-free', name: 'Llama (مجاني)', description: 'مساعد AI مجاني من Meta',
-      avatar: '🦙', provider: 'openrouter', model: 'nvidia/nemotron-3-super-120b-a12b:free',
-      system_prompt: 'أنت مساعد تعليمي مفيد يتحدث العربية. تخصصك مساعدة الطلاب.',
-      api_key_env: 'OPENROUTER_API_KEY', capabilities: '["text","reasoning","creative"]'
-    }
-  ];
-  for (const a of agents) {
-    if (!_stmts.getAgentById.get(a.id)) {
-      _stmts.insertAgent.run(a.id, a.name, a.description, a.avatar, a.provider, a.model,
-        a.system_prompt, a.api_key_env, a.capabilities);
-    } else {
-      _stmts.updateAgentModel.run(a.model, a.id);
-    }
+  // ── Clean up old AI system ──
+  // Remove old individual AI agents and rooms (replaced by workflow)
+  try {
+    db.prepare("DELETE FROM ai_agents WHERE id IN ('agent-auto','agent-gpt','agent-gemini','agent-gemini-free','agent-deepseek-free','agent-llama-free')").run();
+    db.prepare("DELETE FROM chat_rooms WHERE type = 'ai' AND id != 'ai-workflow'").run();
+    // delete old AI messages from removed rooms
+    db.prepare("DELETE FROM chat_messages WHERE room_id IN (SELECT id FROM chat_rooms WHERE type = 'ai' AND id != 'ai-workflow')").run();
+  } catch { /* tables may not exist yet */ }
+
+  // Single AI Workflow room
+  if (!_stmts.roomExists.get('ai-workflow')) {
+    _stmts.insertRoom.run('ai-workflow', '🤖 المساعد الذكي', 'ai', 'workflow');
+  } else {
+    db.prepare("UPDATE chat_rooms SET name = '🤖 المساعد الذكي', description = 'workflow' WHERE id = 'ai-workflow'").run();
+  }
+
+  // Single workflow agent entry (for compatibility)
+  const wfAgent = {
+    id: 'agent-workflow', name: '🤖 المساعد الذكي', description: 'يوجّه سؤالك تلقائياً للنموذج الأنسب',
+    avatar: '🧠', provider: 'workflow', model: 'auto-route',
+    system_prompt: 'أنت مساعد ذكي متعدد النماذج. توجّه كل سؤال للنموذج الأنسب تلقائياً.',
+    api_key_env: '', capabilities: '["text","code","math","analysis","creative","research"]'
+  };
+  if (!_stmts.getAgentById.get(wfAgent.id)) {
+    _stmts.insertAgent.run(wfAgent.id, wfAgent.name, wfAgent.description, wfAgent.avatar,
+      wfAgent.provider, wfAgent.model, wfAgent.system_prompt, wfAgent.api_key_env, wfAgent.capabilities);
+  } else {
+    db.prepare(`UPDATE ai_agents SET name=?, description=?, model=?, provider=?, system_prompt=?, api_key_env=?, capabilities=? WHERE id=?`)
+      .run(wfAgent.name, wfAgent.description, wfAgent.model, wfAgent.provider, wfAgent.system_prompt, wfAgent.api_key_env, wfAgent.capabilities, wfAgent.id);
   }
 })();
 
@@ -574,7 +557,7 @@ function isUserBanned(userId) {
    USER SEARCH
 ═══════════════════════════════════════ */
 function searchUsers(query, limit) {
-  return _stmts.searchUsers.all(`%${query}%`, limit || 20);
+  return _stmts.searchUsers.all(`%${query}%`, `%${query}%`, limit || 20);
 }
 
 function getAllUsers(limit) {

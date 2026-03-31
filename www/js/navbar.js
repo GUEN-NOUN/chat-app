@@ -205,7 +205,26 @@
       headerLi.appendChild(closeBtn);
       navLinks.insertBefore(headerLi, navLinks.firstChild);
     }
-    // Inject admin button as the last <li> in the mobile full-screen menu
+    // Inject theme toggle as a nav item
+    if (navLinks && !document.getElementById('mob-theme-toggle-li')) {
+      var themeLi = document.createElement('li');
+      themeLi.id = 'mob-theme-toggle-li';
+      themeLi.className = 'mob-theme-toggle';
+      var themeBtn = document.createElement('button');
+      themeBtn.className = 'nav-link theme-toggle';
+      themeBtn.type = 'button';
+      var currentTheme = window.Theme && window.Theme.get ? window.Theme.get() : 'dark';
+      themeBtn.textContent = currentTheme === 'dark' ? '☀️ الوضع النهاري' : '🌙 الوضع الليلي';
+      themeBtn.setAttribute('aria-label', 'تبديل السمة');
+      themeBtn.addEventListener('click', function () {
+        if (window.Theme) window.Theme.toggle();
+        var t = window.Theme && window.Theme.get ? window.Theme.get() : 'dark';
+        themeBtn.textContent = t === 'dark' ? '☀️ الوضع النهاري' : '🌙 الوضع الليلي';
+      });
+      navLinks.appendChild(themeLi);
+      themeLi.appendChild(themeBtn);
+    }
+    // Inject admin button as the last <li> in the nav-links
     if (navLinks && !document.getElementById('mob-nav-admin-li')) {
       var adminLi = document.createElement('li');
       adminLi.id = 'mob-nav-admin-li';

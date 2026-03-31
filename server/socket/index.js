@@ -37,8 +37,6 @@ const {
   toggleReaction, getReactions, markRead,
   getAiUsage, incrementAiUsage, isUserBanned
 } = require('../db');
-const aiService      = require('../services/ai.service');
-const { getAgentById } = require('../db');
 
 const TYPING_DEBOUNCE = 3000;
 const MSG_WINDOW_MS   = 10_000;   // sliding window
@@ -105,7 +103,7 @@ function attachSocket(io) {
     const allowMessage = makeRateLimiter(MSG_WINDOW_MS, MSG_WINDOW_MAX);
 
     /* â”€â”€ JOIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-    socket.on('join', async ({ roomId } = {}) => {
+    socket.on('join', async ({ roomId, since } = {}) => {
       if (!roomId || typeof roomId !== 'string') return;
       const room = getRoomById(roomId);
       if (!room) { socket.emit('error', { error: 'Room not found' }); return; }
@@ -126,10 +124,16 @@ function attachSocket(io) {
       if (!roomPresence.has(roomId)) roomPresence.set(roomId, new Set());
       roomPresence.get(roomId).add(userId);
 
-      // Send initial history with cursor info and media integrity flags
-      const { messages, hasMore, nextCursor } = getMessagesPaged(roomId, 50);
-      const safeMessages = await annotateMedia(messages);
-      socket.emit('history', { roomId, messages: safeMessages, hasMore, nextCursor });
+      // On reconnect with `since`, only send new messages; otherwise full page
+      if (since && typeof since === 'string') {
+        const newMsgs = getMessagesSince(roomId, since, 100);
+        const safeMsgs = await annotateMedia(newMsgs);
+        socket.emit('history', { roomId, messages: safeMsgs, append: true });
+      } else {
+        const { messages, hasMore, nextCursor } = getMessagesPaged(roomId, 50);
+        const safeMessages = await annotateMedia(messages);
+        socket.emit('history', { roomId, messages: safeMessages, hasMore, nextCursor });
+      }
 
       io.to(roomId).emit('presence', {
         userId, status: 'online', roomId,
@@ -140,6 +144,13 @@ function attachSocket(io) {
     /* â”€â”€ MESSAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     socket.on('message', async ({ id: clientId, roomId, type, body, replyTo, agentId, media_url, mime } = {}) => {
       if (!roomId || !body) return;
+
+      // Per-message ban check — catches users banned after socket handshake
+      if (isUserBanned(userId)) {
+        socket.emit('error', { error: 'لقد تم حظرك' });
+        socket.disconnect(true);
+        return;
+      }
 
       // Rate limit
       if (!allowMessage()) {
@@ -162,7 +173,10 @@ function attachSocket(io) {
       const room = getRoomById(roomId);
       if (!room) { socket.emit('error', { error: 'Room not found' }); return; }
 
-      const msgType  = ['text', 'image', 'audio', 'video', 'file'].includes(type) ? type : 'text';
+      // If media_url is absent, treat as plain text regardless of declared type
+      const msgType  = cleanMediaUrl
+        ? (['image', 'audio', 'video', 'file'].includes(type) ? type : 'file')
+        : 'text';
       const serverId = saveMessage(roomId, userId, username, msgType, cleanBody, null, replyTo || null, null, cleanMediaUrl, cleanMime);
       const msg = {
         id: serverId, roomId, senderId: userId, sender: username,
@@ -174,18 +188,9 @@ function attachSocket(io) {
       socket.emit('message:ack', { clientId, serverId, ts: msg.ts });
       io.to(roomId).emit('message', msg);
 
-      /* ── AI Agent response ─────────────────────────────────────────────── */
-      // Resolve agentId: client value OR room.description fallback for AI rooms
-      const resolvedAgentId = agentId || (room.type === 'ai' ? room.description : null);
-      if (resolvedAgentId) {
-        let agent = getAgentById(resolvedAgentId);
-        // Fallback: if agent's API key is missing, try openrouter free agent
-        if (agent && !process.env[agent.api_key_env || ''] && agent.provider !== 'auto') {
-          const fallback = getAgentById('agent-gemini-free');
-          if (fallback?.active && process.env[fallback.api_key_env]) agent = fallback;
-        }
-        if (!agent?.active) return;
-
+      /* ── AI Workflow Agent ─────────────────────────────────────────────── */
+      // Route AI requests through the workflow orchestrator
+      if (room.type === 'ai') {
         // Daily AI quota check
         const usage = getAiUsage(userId);
         if (usage >= AI_DAILY_LIMIT) {
@@ -194,42 +199,41 @@ function attachSocket(io) {
         }
         incrementAiUsage(userId);
 
-        const recentHistory = getMessages(roomId, 10).map(m => ({
-          role: m.sender_id === `agent_${resolvedAgentId}` ? 'assistant' : 'user',
-          content: m.body
-        }));
-
-        const aiMsgId  = crypto.randomUUID();
-        let   fullText = '';
+        const aiMsgId = crypto.randomUUID();
+        const sessionId = `${userId}:${roomId}`;
 
         try {
-          await aiService.streamChat(agent, cleanBody, recentHistory, (token, done) => {
-            fullText += token;
-            // Stream chunks to requesting socket only
-            socket.emit('ai:chunk', { msgId: aiMsgId, roomId, token, done });
+          const { runOrchestrator } = require('../../ai-workflow-agent/orchestrator');
+          const result = await runOrchestrator(cleanBody, sessionId);
+          const agentLabel = `${result.emoji} ${result.model}`;
+          const fullText = result.output || '…';
 
-            if (done) {
-              const savedId = saveMessage(
-                roomId, `agent_${resolvedAgentId}`, agent.name, 'text',
-                fullText || '…', aiMsgId, serverId, resolvedAgentId
-              );
-              // Broadcast complete message to room peers (sender already got chunks)
-              socket.to(roomId).emit('message', {
-                id: savedId, roomId,
-                senderId: `agent_${resolvedAgentId}`, sender: agent.name,
-                type: 'text', body: fullText,
-                ts: new Date().toISOString(),
-                agentId: resolvedAgentId, agentAvatar: agent.avatar, replyTo: serverId
-              });
-            }
+          const savedId = saveMessage(
+            roomId, 'agent_workflow', agentLabel, 'text',
+            fullText, aiMsgId, serverId, 'workflow'
+          );
+          socket.emit('ai:chunk', { msgId: aiMsgId, roomId, token: fullText, done: true, model: result.model });
+          socket.to(roomId).emit('message', {
+            id: savedId, roomId,
+            senderId: 'agent_workflow', sender: agentLabel,
+            type: 'text', body: fullText,
+            ts: new Date().toISOString(),
+            agentId: 'workflow', agentAvatar: result.emoji, replyTo: serverId
           });
         } catch (err) {
-          console.error('AI agent error:', err.message);
-          // Send error as a visible system message so user sees it in chat
-          const errText = err.message?.includes('API key')
-            ? 'مفتاح API غير مُعدّ. تواصل مع المسؤول.'
-            : 'وكيل الذكاء الاصطناعي غير متاح حالياً. حاول مرة أخرى.';
-          socket.emit('ai:chunk', { msgId: aiMsgId, roomId, token: '⚠️ ' + errText, done: true });
+          console.error('AI Workflow error:', err.message);
+          const errBody = `⚠️ خطأ في نظام الذكاء الاصطناعي:\n🔍 ${err.message?.slice(0, 150) || 'خطأ غير معروف'}`;
+          const errSavedId = saveMessage(
+            roomId, 'agent_workflow', '🤖 AI Workflow', 'text',
+            errBody, aiMsgId, serverId, 'workflow'
+          );
+          socket.emit('ai:chunk', { msgId: aiMsgId, roomId, token: errBody, done: true });
+          socket.to(roomId).emit('message', {
+            id: errSavedId, roomId,
+            senderId: 'agent_workflow', sender: '🤖 AI Workflow',
+            type: 'text', body: errBody,
+            ts: new Date().toISOString(), agentId: 'workflow', replyTo: serverId
+          });
         }
       }
     });
@@ -249,6 +253,14 @@ function attachSocket(io) {
     /* â”€â”€ REACTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     socket.on('reaction', ({ messageId, roomId, emoji } = {}) => {
       if (!messageId || !emoji || typeof emoji !== 'string' || emoji.length > 32) return;
+      // Validate room and membership to prevent cross-room reaction injection
+      if (!roomId || typeof roomId !== 'string') return;
+      const rxRoom = getRoomById(roomId);
+      if (!rxRoom) return;
+      if (rxRoom.type !== 'public') {
+        const members = getRoomMembers(roomId);
+        if (!members.some(m => m.id === userId)) return;
+      }
       toggleReaction(messageId, userId, emoji);
       const reactions = getReactions(messageId);
       io.to(roomId).emit('reaction', { messageId, roomId, reactions });

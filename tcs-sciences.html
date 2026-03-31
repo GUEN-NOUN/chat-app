@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8"/>
@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css?v=3"/>
+  <link rel="stylesheet" href="css/main.css?v=5"/>
   <!-- Favicons / PWA icons ─────────────────────────────────────────────── -->
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
   <link rel="icon" href="assets/favicon.svg" sizes="any"/>
@@ -221,18 +221,39 @@
       </div>
     </div>
   </div>
+
+  <!-- Chat username (first visit) -->
+  <div class="overlay" id="m-chat-username">
+    <div class="modal" style="max-width:380px">
+      <div class="modal-head">
+        <span class="micon">💬</span>
+        <h3>اختر اسمك الرمزي</h3>
+        <p>أدخل اسمًا يعرّفك في المحادثة (يُحفظ على هذا الجهاز فقط)</p>
+      </div>
+      <div class="form-field">
+        <label for="chat-username-input">الاسم الرمزي</label>
+        <input type="text" id="chat-username-input" placeholder="مثال: أحمد" maxlength="32" autocomplete="off"/>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-primary" type="button" id="chat-username-submit">متابعة</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Chat — opens the new Socket.io React SPA -->
   <button id="chat-fab" type="button" aria-label="فتح الدردشة" aria-expanded="false" title="الدردشة">💬</button>
+
+
 
   <script src="js/version.js?v=3"></script>
   <script src="js/config.js?v=3"></script>
   <script src="js/utils.js?v=3"></script>
   <script src="js/storage.js?v=3"></script>
-  <script src="js/theme.js?v=3"></script>
+  <script src="js/theme.js?v=4"></script>
   <script src="js/auth.js?v=3"></script>
   <script src="js/modals.js?v=3"></script>
   <script src="js/app.js?v=3"></script>
-  <script src="js/navbar.js?v=3"></script>
+  <script src="js/navbar.js?v=4"></script>
   <script src="js/user-registry.js?v=3"></script>
   <!-- Reports module: enables the 🚩 report button on chat messages -->
   <!-- reports.js checks window.RBAC at call time, so loading order with rbac.js does not matter here -->
