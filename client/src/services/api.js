@@ -1,21 +1,31 @@
 /** client/src/services/api.js — REST API wrapper */
 const _isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
 const BASE = _isNative
-  ? (import.meta.env.VITE_SERVER_URL || 'http://192.168.5.1:3000')
+  ? (import.meta.env.VITE_SERVER_URL || 'http://192.168.1.141:3000')
   : import.meta.env.DEV ? 'http://localhost:3000' : '';
 
 async function request(method, path, body, token) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-    credentials: 'include'
-  });
-  const text = await res.text();
-  try { return JSON.parse(text); }
-  catch { return { ok: false, status: res.status, error: `Server error ${res.status}` }; }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: 'include',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    const text = await res.text();
+    try { return JSON.parse(text); }
+    catch { return { ok: false, status: res.status, error: `Server error ${res.status}` }; }
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') return { ok: false, error: 'Request timed out' };
+    return { ok: false, error: err.message || 'Network error' };
+  }
 }
 
 export const api = {

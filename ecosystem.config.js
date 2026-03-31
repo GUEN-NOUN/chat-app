@@ -2,6 +2,7 @@
  * PM2 ecosystem config — use this when running directly on a VPS (no Docker).
  *
  * Install PM2:    npm install -g pm2
+ * Create logs:    sudo mkdir -p /var/log/madarik && sudo chown $USER /var/log/madarik
  * Start:          pm2 start ecosystem.config.js
  * Auto-restart:   pm2 save && pm2 startup
  * Logs:           pm2 logs madarik

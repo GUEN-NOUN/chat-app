@@ -179,6 +179,10 @@ try {
   )`);
 } catch { /* exists */ }
 
+/* ── Ban system migration ── */
+try { db.exec("ALTER TABLE users ADD COLUMN is_banned INTEGER DEFAULT 0"); } catch { /* exists */ }
+try { db.exec("CREATE INDEX IF NOT EXISTS idx_users_banned ON users(is_banned)"); } catch { /* exists */ }
+
 /* ═══════════════════════════════════════
    PRE-COMPILED PREPARED STATEMENTS
    (compiled once at startup — ~10× faster than db.prepare() per call)
@@ -252,6 +256,11 @@ const _stmts = {
   getOrientations:      db.prepare('SELECT * FROM orientation_announcements ORDER BY created_at DESC LIMIT ?'),
   getOrientationById:   db.prepare('SELECT * FROM orientation_announcements WHERE id = ?'),
   deleteOrientation:    db.prepare('DELETE FROM orientation_announcements WHERE id = ?'),
+
+  // Ban system
+  banUserById:    db.prepare('UPDATE users SET is_banned = 1, status = ? WHERE id = ?'),
+  unbanUserById:  db.prepare("UPDATE users SET is_banned = 0, status = 'offline' WHERE id = ?"),
+  checkBanned:    db.prepare('SELECT is_banned FROM users WHERE id = ?'),
 };
 
 /* ═══════════════════════════════════════
@@ -546,6 +555,22 @@ function deleteOrientationById(id) {
 }
 
 /* ═══════════════════════════════════════
+   BAN SYSTEM HELPERS
+═══════════════════════════════════════ */
+function banUser(userId) {
+  _stmts.banUserById.run('banned', userId);
+}
+
+function unbanUser(userId) {
+  _stmts.unbanUserById.run(userId);
+}
+
+function isUserBanned(userId) {
+  const row = _stmts.checkBanned.get(userId);
+  return row ? !!row.is_banned : false;
+}
+
+/* ═══════════════════════════════════════
    USER SEARCH
 ═══════════════════════════════════════ */
 function searchUsers(query, limit) {
@@ -578,5 +603,7 @@ module.exports = {
   // Reactions (bulk)
   getBulkReactions,
   // Orientation
-  createOrientation, listOrientations, deleteOrientationById
+  createOrientation, listOrientations, deleteOrientationById,
+  // Ban system
+  banUser, unbanUser, isUserBanned
 };

@@ -6,23 +6,12 @@
 (function () {
   'use strict';
 
-  var CHAT_ORIGIN = (window.location.port === '3000' || window.location.port === '')
+  var CHAT_ORIGIN = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? (window.location.protocol + '//' + window.location.hostname +
        (window.location.port ? ':' + window.location.port : ''))
-    : 'http://localhost:3000';
+    : window.location.origin;
 
-  /* ─── Unregister stale Service Workers that cached old /chat/ redirect ──── */
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function (regs) {
-      regs.forEach(function (reg) { reg.unregister(); });
-    });
-    // Also clear any caches that may contain the old redirect
-    if (typeof caches !== 'undefined') {
-      caches.keys().then(function (names) {
-        names.forEach(function (name) { caches.delete(name); });
-      });
-    }
-  }
+  /* ─── NOTE: Stale SW cleanup removed — rely on sw.js versioning instead ── */
 
   /* ─── Silently probe the chat server ────────────────────────────────────── */
   function showServerWarning(msg) {

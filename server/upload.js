@@ -22,7 +22,8 @@ const multer     = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const rateLimit  = require('express-rate-limit');
 const jwt        = require('jsonwebtoken');
-const { JWT_SECRET, COOKIE_NAME } = require('./auth');
+const { JWT_SECRET } = require('./middleware/auth');
+const { COOKIE_NAME } = require('./auth');
 
 const router = express.Router();
 

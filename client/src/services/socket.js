@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 
 const _isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
 const BASE = _isNative
-  ? (import.meta.env.VITE_SERVER_URL || 'http://192.168.5.1:3000')
+  ? (import.meta.env.VITE_SERVER_URL || 'http://192.168.1.141:3000')
   : import.meta.env.DEV ? 'http://localhost:3000' : '';
 
 let socket = null;
@@ -25,7 +25,7 @@ export function getSocket(token) {
     reconnectionDelay: 1000,
     reconnectionDelayMax: 8000,
     randomizationFactor: 0.3,
-    reconnectionAttempts: Infinity   // keep trying rather than giving up
+    reconnectionAttempts: 50   // give up after 50 attempts (~6 min) instead of Infinity
   });
   return socket;
 }

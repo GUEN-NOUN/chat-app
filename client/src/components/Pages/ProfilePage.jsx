@@ -13,9 +13,6 @@ export default function ProfilePage() {
   const [notifEnabled, setNotifEnabled] = useState(() => localStorage.getItem('madarik_notif') !== '0');
   const avatarInputRef = useRef(null);
 
-  const deviceId = localStorage.getItem('madarik_device_id') || '';
-  const shortId = deviceId.slice(0, 8);
-
   function startEdit() {
     setName(user?.username || '');
     setError('');
@@ -101,15 +98,8 @@ export default function ProfilePage() {
         {/* Username */}
         <h2 className="profile-username">{user?.username}</h2>
 
-        {/* ID */}
-        <p className="profile-id">🆔 المعرّف: {shortId}</p>
-
         {/* Info cards */}
         <div className="profile-info-card">
-          <div className="profile-info-row">
-            <span className="profile-info-label">📱 معرّف الجهاز</span>
-            <span className="profile-info-value">{shortId}...</span>
-          </div>
           <div className="profile-info-row">
             <span className="profile-info-label">👤 الاسم</span>
             <span className="profile-info-value">{user?.username}</span>

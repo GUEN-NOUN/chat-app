@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Component } from 'react';
 import {
   BrowserRouter, Routes, Route, Navigate, useParams, useNavigate, useLocation
 } from 'react-router-dom';
@@ -8,6 +8,24 @@ import HomePage    from './components/Pages/HomePage';
 import ChatPage    from './components/Pages/ChatPage';
 import ProfilePage from './components/Pages/ProfilePage';
 import AgentsPage  from './components/Pages/AgentsPage';
+
+/** Global error boundary */
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(err, info) { console.error('[ErrorBoundary]', err, info); }
+  render() {
+    if (this.state.hasError) return (
+      <div className="splash splash-error">
+        <p>⚠️ حدث خطأ غير متوقع</p>
+        <button onClick={() => window.location.reload()} style={{marginTop:'16px',padding:'8px 20px',borderRadius:'8px',cursor:'pointer'}}>
+          🔄 إعادة المحاولة
+        </button>
+      </div>
+    );
+    return this.props.children;
+  }
+}
 
 /** Syncs URL param → active room when the user navigates directly to a room link */
 function RoomRoute() {
@@ -95,10 +113,12 @@ function ChatApp() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <ChatApp />
-      </BrowserRouter>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <ChatApp />
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

@@ -35,7 +35,7 @@ const {
   getRooms, getMemberRooms, getRoomById, ensureRoom, joinRoom, getRoomMembers,
   saveMessage, getMessages, getMessagesPaged, getMessagesSince,
   toggleReaction, getReactions, markRead,
-  getAiUsage, incrementAiUsage
+  getAiUsage, incrementAiUsage, isUserBanned
 } = require('../db');
 const aiService      = require('../services/ai.service');
 const { getAgentById } = require('../db');
@@ -45,21 +45,19 @@ const MSG_WINDOW_MS   = 10_000;   // sliding window
 const MSG_WINDOW_MAX  = 10;       // max msgs per window
 const AI_DAILY_LIMIT  = Number(process.env.AI_DAILY_LIMIT) || 50;
 
-function annotateMedia(messages) {
+async function annotateMedia(messages) {
   if (!Array.isArray(messages)) return messages;
-  return messages.map(m => {
+  return Promise.all(messages.map(async m => {
     if (!m.media_url) return m;
     try {
       const filename = path.basename(m.media_url);
       const filePath = path.join(__dirname, '..', 'uploads', filename);
-      if (!fs.existsSync(filePath)) {
-        return { ...m, media_missing: true };
-      }
+      await fs.promises.access(filePath, fs.constants.F_OK);
+      return m;
     } catch {
       return { ...m, media_missing: true };
     }
-    return m;
-  });
+  }));
 }
 
 function sanitize(str) {
@@ -88,6 +86,9 @@ function attachSocket(io) {
     if (!token) return next(new Error('Authentication required'));
     const payload = verifyToken(token);
     if (!payload) return next(new Error('Invalid token'));
+    if (payload.userId && isUserBanned(payload.userId)) {
+      return next(new Error('لقد تم حظرك'));
+    }
     socket.user = payload;
     next();
   });
@@ -104,7 +105,7 @@ function attachSocket(io) {
     const allowMessage = makeRateLimiter(MSG_WINDOW_MS, MSG_WINDOW_MAX);
 
     /* â”€â”€ JOIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-    socket.on('join', ({ roomId } = {}) => {
+    socket.on('join', async ({ roomId } = {}) => {
       if (!roomId || typeof roomId !== 'string') return;
       const room = getRoomById(roomId);
       if (!room) { socket.emit('error', { error: 'Room not found' }); return; }
@@ -127,7 +128,7 @@ function attachSocket(io) {
 
       // Send initial history with cursor info and media integrity flags
       const { messages, hasMore, nextCursor } = getMessagesPaged(roomId, 50);
-      const safeMessages = annotateMedia(messages);
+      const safeMessages = await annotateMedia(messages);
       socket.emit('history', { roomId, messages: safeMessages, hasMore, nextCursor });
 
       io.to(roomId).emit('presence', {
@@ -247,7 +248,7 @@ function attachSocket(io) {
 
     /* â”€â”€ REACTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     socket.on('reaction', ({ messageId, roomId, emoji } = {}) => {
-      if (!messageId || !emoji || emoji.length > 8) return;
+      if (!messageId || !emoji || typeof emoji !== 'string' || emoji.length > 32) return;
       toggleReaction(messageId, userId, emoji);
       const reactions = getReactions(messageId);
       io.to(roomId).emit('reaction', { messageId, roomId, reactions });
@@ -261,10 +262,10 @@ function attachSocket(io) {
     });
 
     /* â”€â”€ HISTORY (load-more / cursor pagination) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-    socket.on('history', ({ roomId, before } = {}) => {
+    socket.on('history', async ({ roomId, before } = {}) => {
       if (!roomId) return;
       const { messages, hasMore, nextCursor } = getMessagesPaged(roomId, 30, before || null);
-      const safeMessages = annotateMedia(messages);
+      const safeMessages = await annotateMedia(messages);
       socket.emit('history', { roomId, messages: safeMessages, hasMore, nextCursor, page: true });
     });
 

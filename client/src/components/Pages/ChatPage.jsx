@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
 import { useAuth } from '../../context/AuthContext';
@@ -11,7 +11,6 @@ export default function ChatPage() {
   const { user } = useAuth();
   const { activeRoomId, rooms, agents, messages, typingUsers, loadMore, markRead, connected, activeAgentId, dispatch } = useChat();
   const navigate = useNavigate();
-  const [permRequested, setPermRequested] = useState(false);
 
   const room = rooms.find(r => r.id === activeRoomId);
   const msgs = messages[activeRoomId] || [];
@@ -44,24 +43,6 @@ export default function ChatPage() {
     .filter(([uid]) => uid !== user?.id)
     .map(([, name]) => name);
 
-  // Request camera/mic permissions once
-  const requestPermissions = useCallback(async () => {
-    if (permRequested) return;
-    const asked = localStorage.getItem('madarik_perm_asked');
-    if (asked) { setPermRequested(true); return; }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-      stream.getTracks().forEach(t => t.stop());
-    } catch { /* user denied — that's ok */ }
-    localStorage.setItem('madarik_perm_asked', '1');
-    setPermRequested(true);
-  }, [permRequested]);
-
-  const handleCall = useCallback((type) => {
-    requestPermissions();
-    alert(type === 'video' ? 'مكالمات الفيديو قريبًا!' : 'المكالمات الصوتية قريبًا!');
-  }, [requestPermissions]);
-
   return (
     <div className="page chat-page">
       {/* Header */}
@@ -81,12 +62,6 @@ export default function ChatPage() {
           </div>
         </div>
         <div className="chat-page-actions">
-          <button className="btn-header-action" onClick={() => handleCall('voice')} title="مكالمة صوتية">
-            📞
-          </button>
-          <button className="btn-header-action" onClick={() => handleCall('video')} title="مكالمة فيديو">
-            📹
-          </button>
           <AgentSelector />
         </div>
       </header>

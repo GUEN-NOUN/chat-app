@@ -207,6 +207,7 @@ export function ChatProvider({ children }) {
     socket.on('rooms', ({ rooms }) => dispatch({ type: 'SET_ROOMS', rooms }));
 
     socket.on('history', ({ roomId, messages, hasMore, nextCursor, page }) => {
+      loadingMore.current.delete(roomId);
       dispatch({ type: 'SET_HAS_MORE', roomId, hasMore: !!hasMore, nextCursor: nextCursor || null });
       if (page) dispatch({ type: 'PREPEND_MESSAGES', roomId, messages });
       else      dispatch({ type: 'SET_MESSAGES',     roomId, messages });
@@ -271,6 +272,9 @@ export function ChatProvider({ children }) {
     };
   }, [user, token]);
 
+  // Track loading state to prevent duplicate loadMore calls
+  const loadingMore = useRef(new Set());
+
   const joinRoom = useCallback((roomId) => {
     dispatch({ type: 'SET_ACTIVE_ROOM', roomId });
 
@@ -283,14 +287,15 @@ export function ChatProvider({ children }) {
     }
 
     // REST fallback: load messages immediately regardless of socket state
-    if (token && !state.messages[roomId]?.length) {
+    // Use stateRef to avoid stale closure on state.messages
+    if (token && !stateRef.current.messages[roomId]?.length) {
       api.getMessages(roomId, token).then(res => {
         if (res?.messages?.length) {
           dispatch({ type: 'SET_MESSAGES', roomId, messages: res.messages });
         }
       }).catch(() => {/* silent — socket will deliver history when ready */});
     }
-  }, [token, state.messages]);
+  }, [token]);
 
   const sendMessage = useCallback((roomId, body, type = 'text', replyTo = null, mediaUrl = null, mime = null) => {
     if (!body?.trim() || !socketRef.current || !user) return;
@@ -331,9 +336,14 @@ export function ChatProvider({ children }) {
 
   /** Load older messages. Pass `before` cursor (oldest message ts in current list). */
   const loadMore = useCallback((roomId, before) => {
-    if (!state.hasMore[roomId]) return;
+    if (!stateRef.current.hasMore[roomId]) return;
+    // Prevent duplicate requests while loading
+    if (loadingMore.current.has(roomId)) return;
+    loadingMore.current.add(roomId);
     socketRef.current?.emit('history', { roomId, before });
-  }, [state.hasMore]);
+    // Clear loading flag after response (timeout fallback)
+    setTimeout(() => loadingMore.current.delete(roomId), 5000);
+  }, []);
 
   return (
     <ChatContext.Provider value={{

@@ -2,14 +2,24 @@
 
 const express  = require('express');
 const crypto   = require('crypto');
-const { requireAuth, requireAdmin } = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
+const { requireAdmin } = require('../middleware/auth');
 const { getAgents, getAgentById, createAgent, updateAgent, deleteAgent } = require('../db');
 const aiService = require('../services/ai.service');
 
 const router = express.Router();
 
+/* ── Rate limiter for AI chat: 20 req/min per IP ── */
+const aiChatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, error: 'طلبات كثيرة. انتظر دقيقة.' }
+});
+
 /* GET /api/agents — list active agents */
-router.get('/', requireAuth, (_req, res) => {
+router.get('/', (_req, res) => {
   const agents = getAgents(true).map(a => ({
     id: a.id, name: a.name, description: a.description,
     avatar: a.avatar, provider: a.provider, model: a.model,
@@ -20,7 +30,7 @@ router.get('/', requireAuth, (_req, res) => {
 });
 
 /* GET /api/agents/:id */
-router.get('/:id', requireAuth, (req, res) => {
+router.get('/:id', (req, res) => {
   const agent = getAgentById(req.params.id);
   if (!agent || !agent.active) return res.status(404).json({ ok: false });
   return res.json({
@@ -66,7 +76,7 @@ router.delete('/:id', requireAdmin, (req, res) => {
 });
 
 /* POST /api/agents/:id/chat — send a message to an AI agent */
-router.post('/:id/chat', requireAuth, async (req, res) => {
+router.post('/:id/chat', aiChatLimiter, async (req, res) => {
   const { message, history } = req.body || {};
   if (!message || typeof message !== 'string')
     return res.status(400).json({ ok: false, error: 'message required' });

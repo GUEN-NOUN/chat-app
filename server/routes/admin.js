@@ -12,7 +12,7 @@
 
 const express       = require('express');
 const { requireAdmin } = require('../middleware/auth');
-const { db }        = require('../db');
+const { db, banUser, unbanUser } = require('../db');
 
 const router = express.Router();
 
@@ -34,7 +34,7 @@ const _adminStmts = {
   usersTotal:    db.prepare('SELECT COUNT(*) AS n FROM users'),
   usersOnline:   db.prepare("SELECT COUNT(*) AS n FROM users WHERE last_seen >= ?"),
   usersNewToday: db.prepare("SELECT COUNT(*) AS n FROM users WHERE date(created) = ?"),
-  usersBanned:   db.prepare("SELECT COUNT(*) AS n FROM users WHERE status = 'banned'"),
+  usersBanned:   db.prepare("SELECT COUNT(*) AS n FROM users WHERE is_banned = 1"),
   usersSuspended: db.prepare("SELECT COUNT(*) AS n FROM users WHERE status = 'suspended'"),
   msgsTotal:     db.prepare('SELECT COUNT(*) AS n FROM chat_messages WHERE deleted = 0'),
   msgsToday:     db.prepare("SELECT COUNT(*) AS n FROM chat_messages WHERE date(ts) = ? AND deleted = 0"),
@@ -162,17 +162,21 @@ router.get('/messages/recent', (req, res) => {
    POST /api/admin/users/:id/unban
 ══════════════════════════════════════════════════════════════════════════════ */
 router.post('/users/:id/ban', (req, res) => {
-  _adminStmts.banUser.run(req.params.id);
+  banUser(req.params.id);
+  console.log(`[AUDIT] Admin ${req.admin?.email} banned user ${req.params.id}`);
   res.json({ ok: true });
 });
 
 router.post('/users/:id/suspend', (req, res) => {
-  _adminStmts.suspendUser.run(req.params.id);
+  const result = _adminStmts.suspendUser.run(req.params.id);
+  if (result.changes === 0) return res.status(404).json({ ok: false, error: 'User not found' });
+  console.log(`[AUDIT] Admin ${req.admin?.email} suspended user ${req.params.id}`);
   res.json({ ok: true });
 });
 
 router.post('/users/:id/unban', (req, res) => {
-  _adminStmts.unbanUser.run(req.params.id);
+  unbanUser(req.params.id);
+  console.log(`[AUDIT] Admin ${req.admin?.email} unbanned user ${req.params.id}`);
   res.json({ ok: true });
 });
 
@@ -180,7 +184,9 @@ router.post('/users/:id/unban', (req, res) => {
    DELETE /api/admin/messages/:id
 ══════════════════════════════════════════════════════════════════════════════ */
 router.delete('/messages/:id', (req, res) => {
-  _adminStmts.deleteMsg.run(req.params.id);
+  const result = _adminStmts.deleteMsg.run(req.params.id);
+  if (result.changes === 0) return res.status(404).json({ ok: false, error: 'Message not found' });
+  console.log(`[AUDIT] Admin ${req.admin?.email} deleted message ${req.params.id}`);
   res.json({ ok: true });
 });
 

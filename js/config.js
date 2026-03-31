@@ -12,12 +12,12 @@ window.APP_CONFIG = {
      See server/auth.js + server/db.js for JWT-based authentication.
   ──────────────────────────────────────────────────────────────────── */
   API_URL: window.Capacitor?.isNativePlatform?.()
-    ? 'http://192.168.5.1:3000'
+    ? (window.MADARIK_SERVER_URL || 'http://192.168.1.141:3000')
     : (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
       ? 'http://localhost:3000'
       : '',   // same-origin in production
   WS_URL: window.Capacitor?.isNativePlatform?.()
-    ? 'ws://192.168.5.1:3000'
+    ? (window.MADARIK_WS_URL || 'ws://192.168.1.141:3000')
     : (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
       ? 'ws://localhost:3000'
       : ('wss://' + location.host),
@@ -70,42 +70,24 @@ window.APP_CONFIG = {
   ALLOWED_IMAGE_TYPES: ['image/png', 'image/jpeg', 'image/webp'],
   ALLOWED_AUDIO_TYPES: ['audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/wav', 'audio/x-wav', 'audio/webm'],
   LEVELS: [
-    { id: 'first-middle', file: 'index.html', title: 'الأولى إعدادي' },
-    { id: 'first-primary', file: 'first-primary.html', title: 'الصف الأول الابتدائي' },
-    { id: 'second-primary', file: 'second-primary.html', title: 'الصف الثاني الابتدائي' },
-    { id: 'third-primary', file: 'third-primary.html', title: 'الصف الثالث الابتدائي' },
-    { id: 'fourth-primary', file: 'fourth-primary.html', title: 'الصف الرابع الابتدائي' },
-    { id: 'fifth-primary', file: 'fifth-primary.html', title: 'الصف الخامس الابتدائي' },
-    { id: 'sixth-primary', file: 'sixth-primary.html', title: 'الصف السادس الابتدائي' },
-    { id: 'second-middle', file: 'second-middle.html', title: 'الثانية إعدادي' },
-    { id: 'third-middle', file: 'third-middle.html', title: 'الثالثة إعدادي' },
-    { id: 'shared-curricula', file: 'shared-curricula.html', title: 'الجدع المشترك علوم' },
-    { id: 'first-bac-islamic', file: 'first-bac-islamic.html', title: 'الأولى باك - علوم تجريبية' },
-    { id: 'first-bac-math', file: 'first-bac-math.html', title: 'الأولى باك - علوم رياضية' },
-    { id: 'first-bac-economic', file: 'first-bac-economic.html', title: 'الأولى باك - علوم اقتصادية' },
-    { id: 'second-bac-physical', file: 'second-bac-physical.html', title: 'الثانية باك - علوم فيزيائية' },
-    { id: 'second-bac-life-earth', file: 'second-bac-life-earth.html', title: 'الثانية باك - علوم الحياة والأرض' },
-    { id: 'second-bac-math', file: 'second-bac-math.html', title: 'الثانية باك - علوم رياضية' }
+    { id: 'tcs-sciences', file: 'tcs-sciences.html', title: 'الجدع المشترك علمي' },
+    { id: 'tcs-lettres', file: 'tcs-lettres.html', title: 'الجدع المشترك أدبي' },
+    { id: '1bac-sef', file: '1bac-sef.html', title: 'الأولى باك - علوم تجريبية' },
+    { id: '1bac-lettres', file: '1bac-lettres.html', title: 'الأولى باك - آداب' },
+    { id: '2bac-pc', file: '2bac-pc.html', title: 'الثانية باك - علوم فيزيائية' },
+    { id: '2bac-svt', file: '2bac-svt.html', title: 'الثانية باك - علوم الحياة والأرض' },
+    { id: '2bac-lettres', file: '2bac-lettres.html', title: 'الثانية باك - آداب' }
   ],
   /** Subjects per level group — used for sidebar/dropdown filtering */
   SUBJECTS: {
-    primary: [
+    tcs: [
       { id: 'math', name: 'الرياضيات', icon: '📐' },
-      { id: 'arabic', name: 'اللغة العربية', icon: '📖' },
-      { id: 'french', name: 'اللغة الفرنسية', icon: '🇫🇷' },
-      { id: 'islamic', name: 'التربية الإسلامية', icon: '🕌' },
-      { id: 'science', name: 'النشاط العلمي', icon: '🔬' },
-      { id: 'social', name: 'الاجتماعيات', icon: '🌍' }
-    ],
-    middle: [
-      { id: 'math', name: 'الرياضيات', icon: '📐' },
-      { id: 'arabic', name: 'اللغة العربية', icon: '📖' },
-      { id: 'french', name: 'اللغة الفرنسية', icon: '🇫🇷' },
-      { id: 'islamic', name: 'التربية الإسلامية', icon: '🕌' },
       { id: 'physics', name: 'الفيزياء والكيمياء', icon: '⚗️' },
       { id: 'life-earth', name: 'علوم الحياة والأرض', icon: '🌱' },
-      { id: 'social', name: 'الاجتماعيات', icon: '🌍' },
+      { id: 'arabic', name: 'اللغة العربية', icon: '📖' },
+      { id: 'french', name: 'اللغة الفرنسية', icon: '🇫🇷' },
       { id: 'english', name: 'اللغة الإنجليزية', icon: '🇬🇧' },
+      { id: 'islamic', name: 'التربية الإسلامية', icon: '🕌' },
       { id: 'info', name: 'المعلوميات', icon: '💻' }
     ],
     bac: [
@@ -129,5 +111,5 @@ window.APP_CONFIG = {
 window.APP_CONFIG.getCurrentLevel = function () {
   var body = document.body;
   var level = body && body.getAttribute ? body.getAttribute('data-level') : '';
-  return level || 'first-middle';
+  return level || 'tcs-sciences';
 };

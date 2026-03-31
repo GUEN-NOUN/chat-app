@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+  <meta http-equiv="Pragma" content="no-cache"/>
+  <meta http-equiv="Expires" content="0"/>
+  <title>لوحة التحكم | مدارك التعليمية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg"/>
+  <meta name="theme-color" content="#0b1629"/>
+  <style>
+    :root {
+      --bg: #0b1629; --bg2: #111d33; --card: #162240; --border: #1e3a5f;
+      --text: #e8edf5; --text2: #94a3b8; --accent: #3b82f6; --green: #22c55e;
+      --red: #ef4444; --orange: #f59e0b; --purple: #a855f7;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    .header h1 { font-size: 1.4rem; display: flex; align-items: center; gap: .5rem; }
+    .header .actions { display: flex; gap: .5rem; }
+    .btn { padding: .5rem 1rem; border-radius: 8px; border: none; cursor: pointer; font-family: inherit; font-size: .9rem; transition: .2s; }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-accent:hover { opacity: .85; }
+    .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--card); }
+    .btn-red { background: var(--red); color: #fff; }
+    .btn-red:hover { opacity: .85; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-green:hover { opacity: .85; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; }
+    .stat-card .label { font-size: .85rem; color: var(--text2); margin-bottom: .3rem; }
+    .stat-card .value { font-size: 2rem; font-weight: 800; font-family: 'Cairo', sans-serif; }
+    .stat-card .sub { font-size: .75rem; color: var(--text2); margin-top: .2rem; }
+    .section { margin-bottom: 2rem; }
+    .section h2 { font-size: 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
+    .users-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+    .users-table th, .users-table td { padding: .75rem 1rem; text-align: right; border-bottom: 1px solid var(--border); }
+    .users-table th { background: var(--bg2); font-size: .85rem; color: var(--text2); font-weight: 600; }
+    .users-table tr:last-child td { border-bottom: none; }
+    .users-table tr:hover td { background: rgba(59,130,246,.05); }
+    .badge { display: inline-block; padding: .15rem .5rem; border-radius: 6px; font-size: .75rem; font-weight: 600; }
+    .badge-online { background: rgba(34,197,94,.15); color: var(--green); }
+    .badge-offline { background: rgba(148,163,184,.15); color: var(--text2); }
+    .badge-banned { background: rgba(239,68,68,.15); color: var(--red); }
+    .search-bar { display: flex; gap: .5rem; margin-bottom: 1rem; }
+    .search-bar input { flex: 1; padding: .5rem .75rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-family: inherit; font-size: .9rem; }
+    .search-bar input::placeholder { color: var(--text2); }
+    .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 400px; width: 100%; text-align: center; }
+    .login-card h2 { margin-bottom: .5rem; }
+    .login-card p { color: var(--text2); margin-bottom: 1.5rem; font-size: .9rem; }
+    .login-card input { width: 100%; padding: .6rem .75rem; margin-bottom: .75rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-family: inherit; }
+    .login-card .btn { width: 100%; margin-top: .5rem; }
+    .error-msg { color: var(--red); font-size: .85rem; margin-top: .5rem; }
+    .hidden { display: none !important; }
+    .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; padding: .6rem 1.2rem; border-radius: 8px; font-size: .9rem; z-index: 9999; transition: opacity .3s; }
+    .pagination { display: flex; gap: .5rem; margin-top: 1rem; justify-content: center; }
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .users-table { font-size: .8rem; }
+      .users-table th, .users-table td { padding: .5rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <h2>🛡️ لوحة التحكم</h2>
+      <p>سجل دخولك كمسؤول</p>
+      <input type="email" id="login-email" placeholder="البريد الإلكتروني" autocomplete="email"/>
+      <input type="password" id="login-pass" placeholder="كلمة المرور" autocomplete="current-password"/>
+      <button class="btn btn-accent" id="login-btn">تسجيل الدخول</button>
+      <div id="login-error" class="error-msg hidden"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="hidden">
+    <div class="header">
+      <h1>🛡️ لوحة التحكم</h1>
+      <div class="actions">
+        <button class="btn btn-ghost" id="refresh-btn">🔄 تحديث</button>
+        <button class="btn btn-ghost" id="logout-btn">🚪 خروج</button>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- Stats -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="label">المستخدمون</div>
+          <div class="value" id="s-users-total">-</div>
+          <div class="sub"><span id="s-users-online">-</span> متصل الآن</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">الرسائل اليوم</div>
+          <div class="value" id="s-msgs-today">-</div>
+          <div class="sub"><span id="s-msgs-total">-</span> إجمالي</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">الغرف</div>
+          <div class="value" id="s-rooms-total">-</div>
+          <div class="sub"><span id="s-rooms-public">-</span> عامة</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">طلبات AI اليوم</div>
+          <div class="value" id="s-ai-today">-</div>
+          <div class="sub"><span id="s-ai-total">-</span> إجمالي</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">المحظورون</div>
+          <div class="value" id="s-users-banned">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">وقت التشغيل</div>
+          <div class="value" id="s-uptime">-</div>
+          <div class="sub" id="s-memory">-</div>
+        </div>
+      </div>
+
+      <!-- User Management -->
+      <div class="section">
+        <h2>👥 إدارة المستخدمين</h2>
+        <div class="search-bar">
+          <input type="text" id="user-search" placeholder="ابحث باسم المستخدم..."/>
+          <button class="btn btn-accent" id="user-search-btn">بحث</button>
+        </div>
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>الاسم</th>
+              <th>الحالة</th>
+              <th>آخر ظهور</th>
+              <th>إجراء</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+        <div class="pagination" id="users-pagination"></div>
+      </div>
+
+      <!-- Orientation Board Management -->
+      <div class="section">
+        <h2>📢 لوحة التوجيهات</h2>
+        <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
+          <input type="text" id="orient-title" placeholder="العنوان" style="flex:1;padding:.5rem;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-family:inherit;"/>
+          <button class="btn btn-accent" id="orient-add-btn">➕ إضافة</button>
+        </div>
+        <textarea id="orient-body" placeholder="نص الإعلان..." style="width:100%;min-height:80px;padding:.5rem;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-family:inherit;margin-bottom:1rem;resize:vertical;"></textarea>
+        <div id="orient-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+  'use strict';
+  const API = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000' : '';
+
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 3000);
+  }
+
+  async function apiFetch(path, opts = {}) {
+    const res = await fetch(API + path, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+      ...opts
+    });
+    return res.json();
+  }
+
+  // Login
+  document.getElementById('login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('login-email').value.trim();
+    const pass = document.getElementById('login-pass').value;
+    const errEl = document.getElementById('login-error');
+    errEl.classList.add('hidden');
+    if (!email || !pass) { errEl.textContent = 'أدخل البيانات'; errEl.classList.remove('hidden'); return; }
+    const data = await apiFetch('/api/auth/login', {
+      method: 'POST', body: JSON.stringify({ email, password: pass })
+    });
+    if (data.ok) { showDashboard(); }
+    else { errEl.textContent = data.error || 'فشل الدخول'; errEl.classList.remove('hidden'); }
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await apiFetch('/api/auth/logout', { method: 'POST' });
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('login-screen').classList.remove('hidden');
+  });
+
+  document.getElementById('refresh-btn').addEventListener('click', loadStats);
+
+  async function showDashboard() {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    await Promise.all([loadStats(), loadUsers(), loadOrientations()]);
+  }
+
+  // Stats
+  async function loadStats() {
+    const data = await apiFetch('/api/admin/stats');
+    if (!data.ok) return;
+    const s = data.stats;
+    document.getElementById('s-users-total').textContent = s.users.total;
+    document.getElementById('s-users-online').textContent = s.users.online;
+    document.getElementById('s-msgs-today').textContent = s.messages.today;
+    document.getElementById('s-msgs-total').textContent = s.messages.total;
+    document.getElementById('s-rooms-total').textContent = s.rooms.total;
+    document.getElementById('s-rooms-public').textContent = s.rooms.public;
+    document.getElementById('s-ai-today').textContent = s.ai.requestsToday;
+    document.getElementById('s-ai-total').textContent = s.ai.requestsTotal;
+    document.getElementById('s-users-banned').textContent = s.users.banned;
+    const mins = Math.floor(s.server.uptimeSeconds / 60);
+    const hrs = Math.floor(mins / 60);
+    document.getElementById('s-uptime').textContent = hrs > 0 ? hrs + 'h ' + (mins % 60) + 'm' : mins + 'm';
+    document.getElementById('s-memory').textContent = s.server.memoryMB + ' MB RAM';
+  }
+
+  // Users
+  let usersOffset = 0;
+  async function loadUsers(q = '') {
+    const data = await apiFetch('/api/admin/users?limit=20&offset=' + usersOffset + (q ? '&q=' + encodeURIComponent(q) : ''));
+    if (!data.ok) return;
+    const tbody = document.getElementById('users-tbody');
+    tbody.innerHTML = '';
+    for (const u of data.users) {
+      const isBanned = u.status === 'banned' || u.is_banned;
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + esc(u.username) + '</td>'
+        + '<td><span class="badge ' + (isBanned ? 'badge-banned' : u.status === 'online' ? 'badge-online' : 'badge-offline') + '">'
+        + (isBanned ? 'محظور' : u.status === 'online' ? 'متصل' : 'غير متصل') + '</span></td>'
+        + '<td>' + (u.last_seen ? new Date(u.last_seen).toLocaleString('ar') : '-') + '</td>'
+        + '<td>' + (isBanned
+          ? '<button class="btn btn-green btn-sm" data-unban="' + esc(u.id) + '">رفع الحظر</button>'
+          : '<button class="btn btn-red btn-sm" data-ban="' + esc(u.id) + '">حظر</button>')
+        + '</td>';
+      tbody.appendChild(tr);
+    }
+    // Ban/unban handlers
+    tbody.querySelectorAll('[data-ban]').forEach(btn => btn.addEventListener('click', async () => {
+      await apiFetch('/api/admin/users/' + btn.dataset.ban + '/ban', { method: 'POST' });
+      toast('تم حظر المستخدم');
+      loadUsers(document.getElementById('user-search').value);
+    }));
+    tbody.querySelectorAll('[data-unban]').forEach(btn => btn.addEventListener('click', async () => {
+      await apiFetch('/api/admin/users/' + btn.dataset.unban + '/unban', { method: 'POST' });
+      toast('تم رفع الحظر');
+      loadUsers(document.getElementById('user-search').value);
+    }));
+  }
+
+  document.getElementById('user-search-btn').addEventListener('click', () => {
+    usersOffset = 0;
+    loadUsers(document.getElementById('user-search').value.trim());
+  });
+  document.getElementById('user-search').addEventListener('keypress', e => {
+    if (e.key === 'Enter') { usersOffset = 0; loadUsers(e.target.value.trim()); }
+  });
+
+  // Orientation
+  async function loadOrientations() {
+    const data = await apiFetch('/api/orientation');
+    if (!data.ok) return;
+    const list = document.getElementById('orient-list');
+    list.innerHTML = '';
+    for (const a of data.announcements) {
+      const div = document.createElement('div');
+      div.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:start;';
+      div.innerHTML = '<div><strong>' + esc(a.title) + '</strong><p style="color:var(--text2);font-size:.85rem;margin-top:.3rem;">' + esc(a.body).slice(0, 200) + '</p><small style="color:var(--text2)">' + new Date(a.created_at).toLocaleString('ar') + '</small></div>'
+        + '<button class="btn btn-red" data-del-orient="' + esc(a.id) + '" style="flex-shrink:0;margin-right:.5rem;">حذف</button>';
+      list.appendChild(div);
+    }
+    list.querySelectorAll('[data-del-orient]').forEach(btn => btn.addEventListener('click', async () => {
+      await apiFetch('/api/orientation/' + btn.dataset.delOrient, { method: 'DELETE' });
+      toast('تم حذف الإعلان');
+      loadOrientations();
+    }));
+  }
+
+  document.getElementById('orient-add-btn').addEventListener('click', async () => {
+    const title = document.getElementById('orient-title').value.trim();
+    const body = document.getElementById('orient-body').value.trim();
+    if (!title || !body) { toast('أدخل العنوان والنص'); return; }
+    const data = await apiFetch('/api/orientation', {
+      method: 'POST', body: JSON.stringify({ title, body })
+    });
+    if (data.ok) {
+      document.getElementById('orient-title').value = '';
+      document.getElementById('orient-body').value = '';
+      toast('تم إضافة الإعلان');
+      loadOrientations();
+    } else { toast(data.error || 'فشل'); }
+  });
+
+  function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  // Auto-check auth on load
+  (async () => {
+    const data = await apiFetch('/api/auth/me');
+    if (data.ok) showDashboard();
+  })();
+  </script>
+</body>
+</html>

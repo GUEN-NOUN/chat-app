@@ -6,7 +6,7 @@
   "server": {
     "androidScheme": "https",
     "iosScheme": "https",
-    "allowNavigation": ["http://192.168.5.1:3000", "ws://192.168.5.1:3000"]
+    "allowNavigation": ["http://192.168.1.141:3000", "ws://192.168.1.141:3000"]
   },
 
   "android": {

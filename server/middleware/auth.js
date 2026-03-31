@@ -39,4 +39,15 @@ function optionalAuth(req, res, next) {
   next();
 }
 
-module.exports = { verifyToken, requireAdmin, requireAuth, optionalAuth, JWT_SECRET };
+/** Reject banned users with 403 */
+function requireNotBanned(req, res, next) {
+  const userId = req.user?.userId;
+  if (!userId) return next(); // admin tokens don't have userId
+  const { isUserBanned } = require('../db');
+  if (isUserBanned(userId)) {
+    return res.status(403).json({ ok: false, error: 'لقد تم حظرك' });
+  }
+  next();
+}
+
+module.exports = { verifyToken, requireAdmin, requireAuth, optionalAuth, requireNotBanned, JWT_SECRET };

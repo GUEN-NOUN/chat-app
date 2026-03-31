@@ -3,7 +3,7 @@
 const fs      = require('fs');
 const path    = require('path');
 const express = require('express');
-const { requireAuth } = require('../middleware/auth');
+// requireAuth + requireNotBanned applied at mount level in index.js
 const { getMessages, toggleReaction, getReactions, getBulkReactions, deleteMessage, getMessageById } = require('../db');
 
 const router = express.Router();
@@ -26,7 +26,7 @@ async function annotateMedia(messages) {
 }
 
 /* GET /api/messages/:roomId?limit=50&before=<ts> */
-router.get('/:roomId', requireAuth, async (req, res) => {
+router.get('/:roomId', async (req, res) => {
   const { limit, before } = req.query;
   const messages = getMessages(
     req.params.roomId,
@@ -45,11 +45,11 @@ router.get('/:roomId', requireAuth, async (req, res) => {
 });
 
 /* POST /api/messages/:messageId/react */
-router.post('/:messageId/react', requireAuth, (req, res) => {
+router.post('/:messageId/react', (req, res) => {
   const { emoji } = req.body || {};
   if (!emoji || typeof emoji !== 'string') return res.status(400).json({ ok: false, error: 'emoji required' });
-  // Validate emoji is a single grapheme cluster (basic check)
-  if (emoji.length > 8) return res.status(400).json({ ok: false, error: 'Invalid emoji' });
+  // Validate emoji length (allow complex emoji like family/flag sequences)
+  if (emoji.length > 32) return res.status(400).json({ ok: false, error: 'Invalid emoji' });
 
   const userId = req.user.userId || req.user.id;
   const result = toggleReaction(req.params.messageId, userId, emoji);
@@ -58,7 +58,7 @@ router.post('/:messageId/react', requireAuth, (req, res) => {
 });
 
 /* DELETE /api/messages/:messageId */
-router.delete('/:messageId', requireAuth, (req, res) => {
+router.delete('/:messageId', (req, res) => {
   const msg = getMessageById(req.params.messageId);
   if (!msg) return res.status(404).json({ ok: false });
   const userId = req.user.userId || req.user.id;

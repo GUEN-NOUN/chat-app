@@ -91,19 +91,10 @@ router.get('/me', (req, res) => {
 });
 
 /* ═══════════════════════════════════════
-   Middleware: requireAuth
+   Middleware: requireAuth — REMOVED (duplicate)
+   Use require('../middleware/auth').requireAuth instead.
+   This avoids having two conflicting auth middlewares.
 ═══════════════════════════════════════ */
-function requireAuth(req, res, next) {
-  const token = req.cookies && req.cookies[COOKIE_NAME];
-  if (!token) return res.status(401).json({ ok: false, error: 'يرجى تسجيل الدخول' });
-  try {
-    req.admin = jwt.verify(token, JWT_SECRET);
-    next();
-  } catch {
-    res.clearCookie(COOKIE_NAME, { path: '/' });
-    return res.status(401).json({ ok: false, error: 'انتهت الجلسة' });
-  }
-}
 
 /* ── Rate limiter for chat-token: 5 requests per minute per IP ── */
 const chatTokenLimiter = rateLimit({
@@ -132,4 +123,4 @@ router.post('/chat-token', chatTokenLimiter, (req, res) => {
   return res.json({ ok: true, token });
 });
 
-module.exports = { router, requireAuth, JWT_SECRET, COOKIE_NAME };
+module.exports = { router, COOKIE_NAME };

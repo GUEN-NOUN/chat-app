@@ -40,6 +40,7 @@ const messagesRouter                  = require('./routes/messages');
 const agentsRouter                    = require('./routes/agents');
 const adminRouter                     = require('./routes/admin');
 const orientationRouter               = require('./routes/orientation');
+const { requireAuth, requireNotBanned } = require('./middleware/auth');
 
 // Realtime
 const { attachSocket } = require('./socket/index');
@@ -89,8 +90,8 @@ app.use(helmet({
         "https://generativelanguage.googleapis.com",
         "https://openrouter.ai"
       ],
-      mediaSrc:   ["'self'", "blob:"],
-      frameSrc:   ["'self'", "https://www.youtube.com"]
+      mediaSrc:   ["'self'", "blob:", "https:"],
+      frameSrc:   ["'self'", "https://www.youtube.com", "https://*.soutiensco.com"]
     }
   },
   frameguard:     { action: 'sameorigin' },
@@ -122,9 +123,9 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/api/auth',     authRouter);
 app.use('/api/upload',   uploadRouter);
 app.use('/api/users',    usersRouter);
-app.use('/api/chats',    chatsRouter);
-app.use('/api/messages', messagesRouter);
-app.use('/api/agents',      agentsRouter);
+app.use('/api/chats',    requireAuth, requireNotBanned, chatsRouter);
+app.use('/api/messages', requireAuth, requireNotBanned, messagesRouter);
+app.use('/api/agents',   requireAuth, requireNotBanned, agentsRouter);
 app.use('/api/admin',       adminRouter);
 app.use('/api/orientation', orientationRouter);
 

@@ -312,6 +312,61 @@
     return m ? m[1] : null;
   }
 
+  /** Detect video type from URL */
+  function detectVideoType(url) {
+    if (!url) return { type: 'unknown' };
+    // YouTube
+    var ytId = extractYTID(url);
+    if (ytId) return { type: 'youtube', id: ytId };
+    // MP4/MOV direct link
+    if (/\.(mp4|mov|webm)(\?|$)/i.test(url)) return { type: 'direct', url: url };
+    // Soutiensco
+    if (/soutiensco/i.test(url)) return { type: 'soutiensco', url: url };
+    // Fallback: try as direct link
+    return { type: 'link', url: url };
+  }
+
+  /** Render video card thumbnail based on type */
+  function videoThumb(v) {
+    var info = detectVideoType(v.url || '');
+    if (info.type === 'youtube' || v.id) {
+      var vid = info.id || v.id;
+      return '<div class="vid-thumb">' +
+        '<img src="https://img.youtube.com/vi/' + Utils.esc(vid) + '/hqdefault.jpg" alt="" loading="lazy" onerror="this.style.display=\'none\'">' +
+        '<div class="vid-play"></div></div>';
+    }
+    if (info.type === 'direct') {
+      return '<div class="vid-thumb"><video src="' + Utils.esc(info.url) + '" muted preload="metadata" style="width:100%;height:100%;object-fit:cover;border-radius:8px 8px 0 0;"></video><div class="vid-play"></div></div>';
+    }
+    return '<div class="vid-thumb"><div class="vid-play"></div></div>';
+  }
+
+  /** Open video based on type */
+  function openVideo(v) {
+    var info = detectVideoType(v.url || '');
+    if (info.type === 'youtube' || v.id) {
+      var vid = info.id || v.id;
+      window.open('https://www.youtube.com/watch?v=' + vid, '_blank');
+      return;
+    }
+    if (info.type === 'direct') {
+      // Open in a modal or new tab with HTML5 video
+      var w = window.open('', '_blank');
+      if (w) {
+        w.document.write('<!DOCTYPE html><html><head><title>' + Utils.esc(v.title || 'Video') + '</title><style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;}</style></head><body><video controls autoplay style="max-width:100%;max-height:100vh;"><source src="' + Utils.esc(info.url) + '"></video></body></html>');
+        w.document.close();
+      }
+      return;
+    }
+    if (info.type === 'soutiensco') {
+      // Try the soutiensco URL, with backup_url fallback
+      var target = v.backup_url || info.url;
+      window.open(target, '_blank');
+      return;
+    }
+    if (info.url) window.open(info.url, '_blank');
+  }
+
   function renderVideos() {
     var allVideos = App.getVideos();
     var videos = filterItemsBySubject(allVideos);
@@ -327,10 +382,8 @@
     };
     var cards = videos.length ? videos.map(function (v) {
       var origIdx = allVideos.indexOf(v);
-      return '<div class="vid-card" data-video-id="' + Utils.esc(v.id) + '">' +
-        '<div class="vid-thumb">' +
-        '<img src="https://img.youtube.com/vi/' + Utils.esc(v.id) + '/hqdefault.jpg" alt="" loading="lazy" onerror="this.style.display=\'none\'">' +
-        '<div class="vid-play"></div></div>' +
+      return '<div class="vid-card" data-video-idx="' + origIdx + '">' +
+        videoThumb(v) +
         (isAdmin ? '<button class="vid-del" type="button" data-video-index="' + origIdx + '" title="حذف">🗑</button>' : '') +
         '<div class="vid-info">' + subjectBadgeFor(v) + '<div class="vid-title">' + Utils.esc(v.title) + '</div><div class="vid-desc">' + Utils.esc(v.desc) + '</div></div></div>';
     }).join('') : '<div class="empty" style="grid-column:1/-1"><span class="empty-icon">🎬</span><p>' +
@@ -344,17 +397,20 @@
     // Bind subject filtering
     bindSubjectEvents(renderVideos);
     bindAdminBarEvents('m-video');
-    page.querySelectorAll('.vid-card[data-video-id]').forEach(function (card) {
+    page.querySelectorAll('.vid-card[data-video-idx]').forEach(function (card) {
       card.addEventListener('click', function (e) {
         if (e.target.closest('.vid-del') || e.target.closest('.lesson-chat-btn')) return;
-        var id = card.getAttribute('data-video-id');
-        if (id) window.open('https://www.youtube.com/watch?v=' + id, '_blank');
+        var idx = parseInt(card.getAttribute('data-video-idx'), 10);
+        var v = allVideos[idx];
+        if (v) openVideo(v);
       });
     });
     // Inject lesson-chat buttons on each video card
-    page.querySelectorAll('.vid-card[data-video-id]').forEach(function (card) {
-      var vid = card.getAttribute('data-video-id');
-      if (!vid) return;
+    page.querySelectorAll('.vid-card[data-video-idx]').forEach(function (card) {
+      var idx = parseInt(card.getAttribute('data-video-idx'), 10);
+      var v = allVideos[idx];
+      if (!v) return;
+      var vid = v.id || idx;
       var level = (App.getCurrentLevel && App.getCurrentLevel()) || 'level';
       var threadId = 'lesson:' + level + '_' + vid;
       var titleEl = card.querySelector('.vid-title');
@@ -443,10 +499,11 @@
     var desc = descEl && descEl.value ? descEl.value.trim() : '';
     var subject = subjEl && subjEl.value ? subjEl.value : '';
     if (!url || !title) { Modals.toast('❌ الرجاء تعبئة الحقول المطلوبة', 'err'); return; }
-    var id = extractYTID(url);
-    if (!id) { Modals.toast('❌ رابط YouTube غير صحيح.', 'err'); return; }
+    var info = detectVideoType(url);
+    var videoEntry = { title: title, desc: desc || 'درس تعليمي', subject: subject, url: url };
+    if (info.type === 'youtube') videoEntry.id = info.id;
     var videos = App.getVideos();
-    videos.unshift({ id: id, title: title, desc: desc || 'درس تعليمي', subject: subject });
+    videos.unshift(videoEntry);
     App.setVideos(videos);
     if (urlEl) urlEl.value = '';
     if (titleEl) titleEl.value = '';
