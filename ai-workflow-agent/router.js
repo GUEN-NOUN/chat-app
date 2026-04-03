@@ -1,152 +1,235 @@
 'use strict';
-// env vars loaded by server process
+// env loaded by server/index.js — no dotenv needed here
 
-const { askOpenRouter } = require('./agents/openrouter');
+// ══════════════════════════════════════════
+//   router.js — الموجّه الذكي الرئيسي
+// ══════════════════════════════════════════
 
-// Lazy-load agents to avoid crash if SDK not installed
-function tryLoad(fn) {
-  return async (...args) => {
-    try { return await fn(...args); }
-    catch (err) {
-      // If it's a "key not configured" error, rethrow so fallback kicks in
-      if (/غير مُعدّ|not configured|MODULE_NOT_FOUND/i.test(err.message)) throw err;
-      throw err;
-    }
-  };
-}
+const { askScholarGPT, askChatGPT, analyzeImageGPT } = require('./agents/chatgpt');
+const {
+  askGroq, askNanoBanana, askQwen, askGroqVision,
+  askGemini, askGeminiPro, askGeminiVision,
+  askDeepSeek, askMistral, askCohere, askClaude
+} = require('./agents/free-models');
+const { withFallback } = require('./fallback');
+const { askOpenRouterVision } = require('./agents/openrouter');
 
-// Free OpenRouter models for fallback (newest first — March 2026)
-const FREE_MODELS = [
-  'qwen/qwen3.6-plus-preview:free',
-  'nvidia/nemotron-3-super-120b-a12b:free',
-  'minimax/minimax-m2.5:free',
-  'stepfun/step-3.5-flash:free',
-  'google/gemma-3-27b-it:free'
-];
-
-async function withFallback(primaryFn, prompt, history, fallbackSystemPrompt) {
-  // Try primary agent first
-  try {
-    return await primaryFn(prompt, history);
-  } catch (primaryErr) {
-    console.log(`  ⚠ Primary agent failed: ${primaryErr.message?.slice(0, 80)}`);
-  }
-  // Fallback: try free OpenRouter models
-  for (const model of FREE_MODELS) {
-    try {
-      console.log(`  ↻ Fallback → ${model}`);
-      return await askOpenRouter(prompt, model, fallbackSystemPrompt);
-    } catch (err) {
-      console.log(`  ✗ ${model}: ${err.message?.slice(0, 60)}`);
-    }
-  }
-  throw new Error('جميع النماذج فشلت. تحقق من مفاتيح API في server/.env');
-}
-
-// Routing rules — Arabic + English keywords
+// ══ قواعد التوجيه الكاملة ══════════════════
 const RULES = [
+
+  // ── 1. ScholarGPT — أولوية قصوى للامتحانات ──
   {
     name: 'ScholarGPT',
-    emoji: '🎓',
-    keywords: ['بحث','دراسة','paper','research','مقال علمي','academic','scholar','مرجع','مراجع','دراسات'],
-    handler: (p, h) => {
-      const { askScholarGPT } = require('./agents/chatgpt');
-      return withFallback(
-        (prompt) => askScholarGPT(prompt, h),
-        p, h,
-        'أنت باحث أكاديمي. استشهد بالمصادر وأجب باللغة العربية بأسلوب أكاديمي.'
-      );
-    }
+    priority: 10,
+    keywords: [
+      'امتحان','اختبار','سؤال','حل المسألة','اشرح','شرح','درس','مادة',
+      'فيزياء','كيمياء','رياضيات','أحياء','تاريخ','جغرافيا','أدب',
+      'فلسفة','اقتصاد','هندسة','طب','قانون','واجب','تمرين','مسألة',
+      'نظرية','قانون فيزيائي','معادلة','برهان','exam','test','homework',
+      'scholar','academic','research paper','ما هو','ما هي','عرّف',
+      'اذكر أسباب','اذكر مزايا','قارن بين','الفرق بين'
+    ],
+    fallbacks: [
+      { name: 'ScholarGPT (GPT-4o)',  fn: (p,h) => askScholarGPT(p,h) },
+      { name: 'Gemini Pro Academic',  fn: (p)   => askGeminiPro(p) },
+      { name: 'DeepSeek R1',          fn: (p)   => askDeepSeek(p,true) },
+      { name: 'Groq Llama Fallback',  fn: (p,h) => askGroq(p,h) }
+    ]
   },
+
+  // ── 2. تحليل الصور ──
   {
-    name: 'DeepSeek R1',
-    emoji: '🧮',
-    keywords: ['رياضيات','معادلة','حساب','math','equation','تفكير','reason','منطق','logic','خوارزمية'],
-    handler: (p, h) => {
-      const { askDeepSeek } = require('./agents/deepseek');
-      return withFallback(
-        (prompt) => askDeepSeek(prompt),
-        p, h,
-        'أنت خبير في التفكير المنطقي والرياضيات. أجب باللغة العربية مع خطوات مفصلة.'
-      );
-    }
+    name: 'Vision Analysis',
+    priority: 9,
+    keywords: ['حلل الصورة','describe image','ما في الصورة','انظر','image','vision','صورة'],
+    isVision: true,
+    fallbacks: [
+      { name: 'GPT-4 Vision',              fn: (p,_,img) => analyzeImageGPT(p,img) },
+      { name: 'Gemini Vision',             fn: (p,_,img) => askGeminiVision(p,img) },
+      { name: 'Llama Vision (Groq)',        fn: (p,_,img) => askGroqVision(p,img) },
+      { name: 'OpenRouter Nemotron Vision', fn: (p,_,img) => askOpenRouterVision(p,img) }
+    ]
   },
+
+  // ── 3. برمجة وكود ──
   {
-    name: 'Claude Sonnet',
-    emoji: '💻',
-    keywords: ['كود','برمجة','code','function','debug','خطأ','bug','script','python','javascript','nodejs'],
-    handler: (p, h) => {
-      const { askClaude } = require('./agents/claude');
-      return withFallback(
-        (prompt) => askClaude(prompt, h),
-        p, h,
-        'أنت خبير برمجة. اكتب كوداً نظيفاً موثقاً مع شرح عربي.'
-      );
-    }
+    name: 'Code Assistant',
+    priority: 8,
+    keywords: [
+      'كود','برمجة','function','def ','class ','import','require',
+      'debug','خطأ في الكود','error','bug','script','python','javascript',
+      'nodejs','react','vue','html','css','sql','api','docker','git'
+    ],
+    fallbacks: [
+      { name: 'Claude Haiku',    fn: (p,h) => askClaude(p,h) },
+      { name: 'GPT-4o Code',     fn: (p,h) => askChatGPT(p,'code',h) },
+      { name: 'Groq Llama Code', fn: (p,h) => askGroq(p,h) },
+      { name: 'DeepSeek Chat',   fn: (p)   => askDeepSeek(p,false) }
+    ]
   },
+
+  // ── 4. رياضيات ومنطق ──
   {
-    name: 'Gemini 1.5 Pro',
-    emoji: '🔬',
-    keywords: ['صورة','image','vision','تحليل','analyze','بيانات','data','جدول','table'],
-    handler: (p, h) => {
-      const { askGemini } = require('./agents/gemini');
-      return withFallback(
-        (prompt) => askGemini(prompt),
-        p, h,
-        'أنت محلل بيانات خبير. حلل وأجب باللغة العربية.'
-      );
-    }
+    name: 'Math & Logic',
+    priority: 7,
+    keywords: [
+      'رياضيات','احسب','calculate','equation','integral','مشتقة',
+      'تكامل','احتمال','matrix','منطق','برهان','proof','هندسة','جبر'
+    ],
+    fallbacks: [
+      { name: 'DeepSeek R1',   fn: (p)   => askDeepSeek(p,true) },
+      { name: 'ScholarGPT',    fn: (p,h) => askScholarGPT(p,h) },
+      { name: 'Gemini Pro',    fn: (p)   => askGeminiPro(p) }
+    ]
   },
+
+  // ── 5. إنشاء عرض تقديمي ──
   {
-    name: 'Groq Llama 3.3',
-    emoji: '⚡',
-    keywords: ['سريع','quick','fast','ملخص','summary','brief','مختصر'],
-    handler: (p, h) => {
-      const { askGroq } = require('./agents/groq');
-      return withFallback(
-        (prompt) => askGroq(prompt, h),
-        p, h,
-        'أنت مساعد سريع. أجب بإيجاز باللغة العربية.'
-      );
-    }
+    name: 'Presentation Builder',
+    priority: 6,
+    keywords: [
+      'عرض تقديمي','بوربوينت','powerpoint','pptx','slides','شرائح',
+      'اصنع عرض','أنشئ عرض','presentation'
+    ],
+    isPPTX: true,
+    fallbacks: [
+      { name: 'GPT-4o Presenter', fn: (p,h) => askChatGPT(p,'default',h) },
+      { name: 'Gemini Pro',       fn: (p)   => askGeminiPro(p) },
+      { name: 'Groq Llama',       fn: (p,h) => askGroq(p,h) }
+    ]
   },
+
+  // ── 6. إنشاء Word / تقارير ──
   {
-    name: 'Nano Banana',
-    emoji: '🍌',
-    keywords: ['بسيط','simple','سؤال بسيط','قصير','short','خفيف'],
-    handler: (p, h) => {
-      const { askNanoBanana } = require('./agents/nano');
-      return withFallback(
-        (prompt) => askNanoBanana(prompt),
-        p, h,
-        'أنت مساعد خفيف وسريع. أجب بإيجاز وباللغة العربية.'
-      );
-    }
+    name: 'Document Builder',
+    priority: 6,
+    keywords: [
+      'وورد','word','docx','تقرير','report','مستند','document',
+      'اكتب تقرير','أنشئ مستند','اصنع ورقة'
+    ],
+    isDOCX: true,
+    fallbacks: [
+      { name: 'GPT-4o Writer', fn: (p,h) => askChatGPT(p,'default',h) },
+      { name: 'Cohere Writer', fn: (p)   => askCohere(p) },
+      { name: 'Gemini Pro',    fn: (p)   => askGeminiPro(p) }
+    ]
+  },
+
+  // ── 7. إنشاء Excel / جداول ──
+  {
+    name: 'Spreadsheet Builder',
+    priority: 6,
+    keywords: ['اكسل','excel','xlsx','جدول','table','spreadsheet','بيانات جدولية'],
+    isXLSX: true,
+    fallbacks: [
+      { name: 'GPT-4o Excel',  fn: (p,h) => askChatGPT(p,'default',h) },
+      { name: 'Groq Llama',    fn: (p,h) => askGroq(p,h) }
+    ]
+  },
+
+  // ── 8. بحث علمي عميق (NotebookLM style) ──
+  {
+    name: 'Deep Research',
+    priority: 5,
+    keywords: [
+      'بحث علمي','ورقة بحثية','ابحث في','deep research','literature review',
+      'مراجعة أدبيات','summarize paper','لخص البحث','notebook','podcast من'
+    ],
+    fallbacks: [
+      { name: 'ScholarGPT Deep', fn: (p,h) => askScholarGPT(p,h) },
+      { name: 'Gemini Pro',      fn: (p)   => askGeminiPro(p) },
+      { name: 'Cohere Research', fn: (p)   => askCohere(p) },
+      { name: 'DeepSeek R1',     fn: (p)   => askDeepSeek(p,true) }
+    ]
+  },
+
+  // ── 9. تلخيص ملفات/محتوى ──
+  {
+    name: 'Summarizer',
+    priority: 5,
+    keywords: [
+      'لخص','ملخص','summarize','summary','خلاصة','اختصر','podcast',
+      'خريطة ذهنية','mind map','أعد صياغة'
+    ],
+    fallbacks: [
+      { name: 'Cohere Summarize', fn: (p) => askCohere(p) },
+      { name: 'Gemini Flash',     fn: (p) => askGemini(p) },
+      { name: 'Mistral',          fn: (p) => askMistral(p) },
+      { name: 'Groq Llama',       fn: (p,h) => askGroq(p,h) }
+    ]
+  },
+
+  // ── 10. ترجمة ──
+  {
+    name: 'Translator',
+    priority: 4,
+    keywords: ['ترجم','translate','translation','بالإنجليزية','بالعربية','بالفرنسية'],
+    fallbacks: [
+      { name: 'GPT-4o Translate', fn: (p,h) => askChatGPT(p,'default',h) },
+      { name: 'Cohere',           fn: (p)   => askCohere(p) },
+      { name: 'Gemini Flash',     fn: (p)   => askGemini(p) }
+    ]
+  },
+
+  // ── 11. سريع / بسيط ──
+  {
+    name: 'Fast Response',
+    priority: 3,
+    keywords: ['سريع','quick','بسيط','مختصر','brief','قصير'],
+    fallbacks: [
+      { name: 'Groq Llama (Fast)', fn: (p,h) => askGroq(p,h) },
+      { name: 'Nano Banana',       fn: (p)   => askNanoBanana(p) },
+      { name: 'Gemini Flash',      fn: (p)   => askGemini(p) }
+    ]
+  },
+
+  // ── 12. لغة عربية / أدب ──
+  {
+    name: 'Arabic Language',
+    priority: 3,
+    keywords: ['نحو','صرف','أدب عربي','قصيدة','نص أدبي','تحليل نص','عروض'],
+    fallbacks: [
+      { name: 'Qwen 2.5 (Arabic)', fn: (p)   => askQwen(p) },
+      { name: 'ScholarGPT',        fn: (p,h) => askScholarGPT(p,h) },
+      { name: 'GPT-4o',            fn: (p,h) => askChatGPT(p,'default',h) }
+    ]
   }
 ];
 
-async function routeTask(input, history = []) {
+async function routeTask(input, history = [], imageBase64 = null) {
   const lower = input.toLowerCase();
-  for (const rule of RULES) {
-    if (rule.keywords.some(kw => lower.includes(kw))) {
-      console.log(`  → ${rule.emoji} التوجيه إلى: ${rule.name}`);
-      const output = await rule.handler(input, history);
-      return { model: rule.name, emoji: rule.emoji, output };
+
+  // إذا كانت هناك صورة → Vision مباشرة
+  if (imageBase64) {
+    const visionRule = RULES.find(r => r.name === 'Vision Analysis');
+    return withFallback(
+      visionRule.fallbacks.map(f => ({
+        name: f.name,
+        fn: (p, h) => f.fn(p, h, imageBase64)
+      })),
+      input, history, imageBase64
+    );
+  }
+
+  const sorted = [...RULES].sort((a, b) => b.priority - a.priority);
+  for (const rule of sorted) {
+    const hits = rule.keywords.filter(kw => lower.includes(kw.toLowerCase()));
+    if (hits.length > 0) {
+      console.log(`  → [${rule.name}] (${hits.slice(0,2).join(', ')})`);
+      const result = await withFallback(rule.fallbacks, input, history);
+      return { ...result, intent: rule.name };
     }
   }
-  // Default: try ChatGPT, fallback to OpenRouter
-  console.log('  → 🤖 التوجيه إلى: ChatGPT GPT-4o (افتراضي)');
-  try {
-    const { askChatGPT } = require('./agents/chatgpt');
-    const output = await withFallback(
-      (prompt) => askChatGPT(prompt, 'default', history),
-      input, history,
-      'أنت مساعد ذكاء اصطناعي متخصص. أجب دائماً باللغة العربية بشكل واضح ومفصل.'
-    );
-    return { model: 'ChatGPT GPT-4o', emoji: '🤖', output };
-  } catch (err) {
-    throw err;
-  }
+
+  // افتراضي
+  console.log('  → [General Chat] افتراضي');
+  const result = await withFallback([
+    { name: 'GPT-4o',      fn: (p,h) => askChatGPT(p,'default',h) },
+    { name: 'Gemini Flash', fn: (p)  => askGemini(p) },
+    { name: 'Groq Llama',  fn: (p,h) => askGroq(p,h) },
+    { name: 'Mistral',     fn: (p)   => askMistral(p) }
+  ], input, history);
+  return { ...result, intent: 'general' };
 }
 
 module.exports = { routeTask, RULES };

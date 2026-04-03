@@ -14,6 +14,7 @@
   var pdfList = [];
   var exercisesList = [];
   var testsList = [];
+  var distributionList = [];
 
   function levelKey(base) {
     return base + '_' + getCurrentLevel();
@@ -35,6 +36,7 @@
     pdfList = (Storage.getItem(levelKey(KEYS.PDF_LIST), defaultPdfs()) || []).map(normalizeDocItem);
     exercisesList = (Storage.getItem(levelKey(KEYS.EXERCISES_LIST), defaultExercises()) || []).map(normalizeDocItem);
     testsList = (Storage.getItem(levelKey(KEYS.TESTS_LIST), defaultTests()) || []).map(normalizeDocItem);
+    distributionList = Storage.getItem(levelKey(KEYS.DISTRIBUTION_LIST), []) || [];
   }
 
   function saveData() {
@@ -42,6 +44,7 @@
     Storage.setItem(levelKey(KEYS.PDF_LIST), pdfList);
     Storage.setItem(levelKey(KEYS.EXERCISES_LIST), exercisesList);
     Storage.setItem(levelKey(KEYS.TESTS_LIST), testsList);
+    Storage.setItem(levelKey(KEYS.DISTRIBUTION_LIST), distributionList);
   }
 
   function defaultVideos() {
@@ -98,7 +101,8 @@
       videos: videos,
       pdfList: pdfList,
       exercisesList: exercisesList,
-      testsList: testsList
+      testsList: testsList,
+      distributionList: distributionList
     };
   }
 
@@ -106,11 +110,13 @@
   function getPdfList() { return pdfList; }
   function getExercisesList() { return exercisesList; }
   function getTestsList() { return testsList; }
+  function getDistributionList() { return distributionList; }
 
   function setVideos(v) { videos = v; saveData(); }
   function setPdfList(v) { pdfList = v; saveData(); }
   function setExercisesList(v) { exercisesList = v; saveData(); }
   function setTestsList(v) { testsList = v; saveData(); }
+  function setDistributionList(v) { distributionList = v; saveData(); }
 
   function init() {
     loadData();
@@ -132,6 +138,8 @@
     setPdfList: setPdfList,
     setExercisesList: setExercisesList,
     setTestsList: setTestsList,
+    getDistributionList: getDistributionList,
+    setDistributionList: setDistributionList,
     init: init
   };
 })();

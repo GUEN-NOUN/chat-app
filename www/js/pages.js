@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 /**
  * Page renderers and handlers. Uses IndexedDB for PDF blobs (no broken URLs on refresh).
@@ -271,6 +271,7 @@
     var p = App.getPdfList();
     var ex = App.getExercisesList();
     var t = App.getTestsList();
+    var dist = App.getDistributionList();
     var levelTitle = (App.getLevelTitle && App.getLevelTitle()) ? App.getLevelTitle() : 'مدارك التعليمية';
     var html = '<div class="home-hero">' +
       '<div class="home-badge">🎓 ' + Utils.esc(levelTitle) + ' · مدارك التعليمية</div>' +
@@ -284,6 +285,7 @@
       '<div class="home-card" data-section="pdf"><span class="hc-icon">📄</span><div class="hc-title">تحميل PDF</div><div class="hc-count">' + (p ? p.length : 0) + ' ملف</div></div>' +
       '<div class="home-card" data-section="exercises"><span class="hc-icon">📝</span><div class="hc-title">سلاسل التمارين</div><div class="hc-count">' + (ex ? ex.length : 0) + ' سلسلة</div></div>' +
       '<div class="home-card" data-section="tests"><span class="hc-icon">📋</span><div class="hc-title">الامتحانات التجريبية</div><div class="hc-count">' + (t ? t.length : 0) + ' امتحان</div></div>' +
+      '<div class="home-card" data-section="distribution"><span class="hc-icon">📋</span><div class="hc-title">التوجيه المدرسي</div><div class="hc-count">' + (dist ? dist.length : 0) + ' منشور</div></div>' +
       '</div></div>';
     // Add subjects quick strip
     var subjects = getSubjects();
@@ -661,6 +663,7 @@
     else if (section === 'pdf') renderPDFs();
     else if (section === 'exercises') renderExercises();
     else if (section === 'tests') renderTests();
+    else if (section === 'distribution') renderDistribution();
   }
 
   /* ── Inline Lesson/Subject Chat ─────────────────────────────────────
@@ -705,12 +708,223 @@
     container.appendChild(btn);
   }
 
+  /* ── Distribution Section ──────────────────────────────────────────
+   * Admin-only uploads: PDF, Word, PPT, Video, images — any file.
+   * Each post has: file, title, short description, optional thumbnail.
+   * Cards show truncated desc; click opens a detail overlay with
+   * full description, file preview/download, and smooth animation.
+   * ─────────────────────────────────────────────────────────────────── */
+  var DIST_MAX_MB = 50;
+  var DIST_ALLOWED_EXT = /\.(pdf|docx?|pptx?|xlsx?|mp4|mov|webm|avi|mkv|png|jpe?g|gif|webp|svg|zip|rar)$/i;
+
+  function fileIcon(name) {
+    if (!name) return '📄';
+    var n = name.toLowerCase();
+    if (/\.pdf$/.test(n)) return '📕';
+    if (/\.docx?$/.test(n)) return '📘';
+    if (/\.pptx?$/.test(n)) return '📙';
+    if (/\.xlsx?$/.test(n)) return '📗';
+    if (/\.(mp4|mov|webm|avi|mkv)$/.test(n)) return '🎬';
+    if (/\.(png|jpe?g|gif|webp|svg)$/.test(n)) return '🖼️';
+    if (/\.(zip|rar)$/.test(n)) return '📦';
+    return '📄';
+  }
+
+  function truncate(text, maxLen) {
+    if (!text || text.length <= maxLen) return text || '';
+    return text.substring(0, maxLen) + '…';
+  }
+
+  function renderDistribution() {
+    var allItems = App.getDistributionList();
+    var isAdmin = Auth.getIsAdmin();
+    var adminBarHtml = adminBar('➕ إضافة منشور جديد', null, 'm-dist');
+    var cardsHtml;
+    if (!allItems || allItems.length === 0) {
+      cardsHtml = '<div class="empty"><span class="empty-icon">📂</span><p>لا توجد منشورات بعد.' +
+        (isAdmin ? ' أضف أول منشور باستخدام الزر أعلاه.' : '') + '</p></div>';
+    } else {
+      cardsHtml = '<div class="dist-grid">' + allItems.map(function (item, idx) {
+        var icon = fileIcon(item.fileName);
+        var shortDesc = truncate(item.desc, 80);
+        var thumbHtml = '';
+        if (item.thumbData) {
+          thumbHtml = '<div class="dist-thumb"><img src="' + item.thumbData + '" alt="" loading="lazy"></div>';
+        } else {
+          thumbHtml = '<div class="dist-thumb dist-thumb-icon"><span>' + icon + '</span></div>';
+        }
+        return '<div class="dist-card" data-dist-idx="' + idx + '">' +
+          thumbHtml +
+          '<div class="dist-body">' +
+          '<h4 class="dist-title">' + Utils.esc(item.title) + '</h4>' +
+          '<p class="dist-desc-short">' + Utils.esc(shortDesc) + '</p>' +
+          '<div class="dist-meta">' +
+          '<span class="dist-file-badge">' + icon + ' ' + Utils.esc(item.fileName || 'بدون ملف') + '</span>' +
+          '<span class="dist-date">' + Utils.esc(item.date || '') + '</span>' +
+          '</div>' +
+          '</div>' +
+          (isAdmin ? '<button class="dist-del" type="button" data-dist-index="' + idx + '" title="حذف">🗑</button>' : '') +
+          '</div>';
+      }).join('') + '</div>';
+    }
+    var html = '<div class="sec-header"><div class="sec-icon">📋</div><h2>التوجيه المدرسي</h2>' +
+      '<span class="sec-count">' + allItems.length + ' منشور</span></div>' +
+      adminBarHtml + cardsHtml;
+    var page = document.getElementById('page');
+    if (!page) return;
+    page.innerHTML = html;
+    bindAdminBarEvents('m-dist');
+    // Card click → detail overlay
+    page.querySelectorAll('.dist-card').forEach(function (card) {
+      card.addEventListener('click', function (e) {
+        if (e.target.closest('.dist-del')) return;
+        var idx = parseInt(card.getAttribute('data-dist-idx'), 10);
+        var item = allItems[idx];
+        if (item) openDistDetail(item);
+      });
+    });
+    // Delete buttons
+    page.querySelectorAll('.dist-del').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var idx = parseInt(btn.getAttribute('data-dist-index'), 10);
+        if (!confirm('هل تريد حذف هذا المنشور نهائيًا؟')) return;
+        var list = App.getDistributionList();
+        var item = list[idx];
+        if (item && item.fileId) Storage.deleteBlob(item.fileId).catch(function () {});
+        list.splice(idx, 1);
+        App.setDistributionList(list);
+        Modals.toast('تم الحذف', 'inf');
+        App.render();
+      });
+    });
+  }
+
+  function openDistDetail(item) {
+    // Remove existing overlay if any
+    var existing = document.getElementById('dist-detail-overlay');
+    if (existing) existing.remove();
+    var icon = fileIcon(item.fileName);
+    var previewHtml = '';
+    if (item.thumbData) {
+      previewHtml = '<div class="dist-detail-preview"><img src="' + item.thumbData + '" alt=""></div>';
+    }
+    var fileActions = '';
+    if (item.fileId) {
+      fileActions = '<div class="dist-detail-actions">' +
+        '<button class="btn btn-primary" type="button" id="dist-detail-open">' + icon + ' فتح الملف</button>' +
+        '<button class="btn btn-ghost" type="button" id="dist-detail-download">⬇ تحميل</button>' +
+        '</div>';
+    }
+    var overlay = document.createElement('div');
+    overlay.id = 'dist-detail-overlay';
+    overlay.className = 'dist-detail-overlay';
+    overlay.innerHTML =
+      '<div class="dist-detail-backdrop"></div>' +
+      '<div class="dist-detail-modal">' +
+      '<button class="dist-detail-close" type="button" aria-label="إغلاق">✕</button>' +
+      previewHtml +
+      '<div class="dist-detail-content">' +
+      '<h2>' + Utils.esc(item.title) + '</h2>' +
+      '<div class="dist-detail-meta">' +
+      '<span>' + icon + ' ' + Utils.esc(item.fileName || 'بدون ملف') + '</span>' +
+      (item.date ? '<span>📅 ' + Utils.esc(item.date) + '</span>' : '') +
+      '</div>' +
+      '<div class="dist-detail-desc">' + Utils.esc(item.desc || 'لا يوجد وصف').replace(/\n/g, '<br>') + '</div>' +
+      fileActions +
+      '</div></div>';
+    document.body.appendChild(overlay);
+    // Animate in
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        overlay.classList.add('open');
+      });
+    });
+    // Close handlers
+    var closeOverlay = function () {
+      overlay.classList.remove('open');
+      overlay.addEventListener('transitionend', function () { overlay.remove(); });
+      setTimeout(function () { overlay.remove(); }, 400);
+    };
+    overlay.querySelector('.dist-detail-backdrop').addEventListener('click', closeOverlay);
+    overlay.querySelector('.dist-detail-close').addEventListener('click', closeOverlay);
+    // File actions
+    var openBtn = document.getElementById('dist-detail-open');
+    if (openBtn) openBtn.addEventListener('click', function () {
+      docDownloadUrl(item.fileId, item.title || item.fileName, true);
+    });
+    var dlBtn = document.getElementById('dist-detail-download');
+    if (dlBtn) dlBtn.addEventListener('click', function () {
+      docDownloadUrl(item.fileId, item.title || item.fileName, false);
+    });
+  }
+
+  function submitDistribution() {
+    if (!Auth.getIsAdmin()) { Modals.toast('غير مصرح. يرجى تسجيل الدخول كمسؤول.', 'err'); return; }
+    var fileEl = document.getElementById('f-distfile');
+    var titleEl = document.getElementById('f-disttitle');
+    var descEl = document.getElementById('f-distdesc');
+    var thumbEl = document.getElementById('f-distthumb');
+    var file = fileEl && fileEl.files && fileEl.files[0];
+    var title = titleEl && titleEl.value ? titleEl.value.trim() : '';
+    var desc = descEl && descEl.value ? descEl.value.trim() : '';
+    if (!title) { Modals.toast('❌ أدخل عنوان المنشور', 'err'); return; }
+    var thumbFile = thumbEl && thumbEl.files && thumbEl.files[0];
+    var processThumb = function (callback) {
+      if (!thumbFile) { callback(null); return; }
+      if (thumbFile.size > 2 * 1024 * 1024) { Modals.toast('❌ حجم الصورة المصغرة يتجاوز 2 ميغا', 'err'); return; }
+      var reader = new FileReader();
+      reader.onload = function () { callback(reader.result); };
+      reader.onerror = function () { callback(null); };
+      reader.readAsDataURL(thumbFile);
+    };
+    processThumb(function (thumbData) {
+      var dateStr = new Date().toLocaleDateString('ar-MA', { year: 'numeric', month: 'long', day: 'numeric' });
+      var saveEntry = function (fileId, fileName) {
+        var entry = {
+          fileId: fileId,
+          fileName: fileName || '',
+          title: title,
+          desc: desc || '',
+          thumbData: thumbData,
+          date: dateStr
+        };
+        var list = App.getDistributionList();
+        list.unshift(entry);
+        App.setDistributionList(list);
+        if (fileEl) fileEl.value = '';
+        if (titleEl) titleEl.value = '';
+        if (descEl) descEl.value = '';
+        if (thumbEl) thumbEl.value = '';
+        Modals.close('m-dist');
+        if (window.Auth && window.Auth.refreshSession) window.Auth.refreshSession();
+        Modals.toast('✅ تم إضافة المنشور بنجاح!', 'ok');
+        App.render();
+      };
+      if (!file) {
+        saveEntry(null, '');
+        return;
+      }
+      if (file.size > DIST_MAX_MB * 1024 * 1024) {
+        Modals.toast('❌ حجم الملف يتجاوز ' + DIST_MAX_MB + ' ميغا', 'err');
+        return;
+      }
+      var id = makeId('dist');
+      Storage.putBlob(id, file).then(function () {
+        saveEntry(id, file.name);
+      }).catch(function () {
+        Modals.toast('❌ فشل حفظ الملف', 'err');
+      });
+    });
+  }
+
   window.Pages = {
     render: render,
     submitVideo: submitVideo,
     submitPDF: submitPDF,
     submitExercise: submitExercise,
     submitTest: submitTest,
+    submitDistribution: submitDistribution,
     getSubjects: getSubjects,
     resetSubjectFilter: function () { activeSubject = 'all'; },
     openLessonChat: openLessonChat

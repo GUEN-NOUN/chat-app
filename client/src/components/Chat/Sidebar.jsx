@@ -58,7 +58,7 @@ export default function Sidebar() {
   const filteredRooms = useMemo(() => {
     if (!search.trim()) return rooms;
     const q = search.trim().toLowerCase();
-    return rooms.filter(r => r.name.toLowerCase().includes(q));
+    return rooms.filter(r => r.name?.toLowerCase().includes(q));
   }, [rooms, search]);
 
   return (

@@ -204,7 +204,31 @@ function attachSocket(io) {
 
         try {
           const { runOrchestrator } = require('../../ai-workflow-agent/orchestrator');
-          const result = await runOrchestrator(cleanBody, sessionId);
+
+          // If image/audio: read file from uploads and prepare base64 for vision/transcription
+          let mediaData = null;
+          if (['image', 'audio'].includes(msgType) && cleanMediaUrl) {
+            try {
+              const fname    = path.basename(cleanMediaUrl);
+              const fpath    = path.join(__dirname, '..', '..', 'uploads', fname);
+              const fbuffer  = await fs.promises.readFile(fpath);
+              mediaData = {
+                type:     msgType,
+                base64:   fbuffer.toString('base64'),
+                mimeType: cleanMime || (msgType === 'image' ? 'image/jpeg' : 'audio/webm')
+              };
+            } catch (readErr) {
+              console.warn('[AI] Could not read media file:', readErr.message);
+            }
+          }
+
+          const result = await runOrchestrator(
+            mediaData?.type === 'image' && !cleanBody.startsWith('/uploads/')
+              ? cleanBody
+              : (mediaData?.type === 'image' ? 'حلل هذه الصورة بالتفصيل' : cleanBody),
+            sessionId,
+            mediaData
+          );
           const agentLabel = `${result.emoji} ${result.model}`;
           const fullText = result.output || '…';
 

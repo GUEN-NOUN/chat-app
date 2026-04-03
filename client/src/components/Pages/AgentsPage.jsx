@@ -12,12 +12,19 @@ const WORKFLOW_AGENT = {
 };
 
 const CAPABILITIES = [
-  { emoji: '📚', label: 'بحث وتحليل' },
-  { emoji: '🔢', label: 'رياضيات ومنطق' },
+  { emoji: '🎓', label: 'بحث أكاديمي' },
+  { emoji: '🔍', label: 'تحليل الصور' },
   { emoji: '💻', label: 'برمجة وكود' },
-  { emoji: '📊', label: 'بيانات وتحليل' },
+  { emoji: '🧮', label: 'رياضيات ومنطق' },
+  { emoji: '📊', label: 'إنشاء العروض' },
+  { emoji: '📝', label: 'إنشاء المستندات' },
+  { emoji: '📚', label: 'بحث عميق' },
+  { emoji: '📋', label: 'تلخيص النصوص' },
+  { emoji: '🌐', label: 'ترجمة' },
   { emoji: '⚡', label: 'إجابات سريعة' },
-  { emoji: '💬', label: 'محادثة عامة' },
+  { emoji: '🔤', label: 'اللغة العربية' },
+  { emoji: '📓', label: 'تحليل NotebookLM' },
+  { emoji: '🎤', label: 'تحويل الصوت لنص' },
 ];
 
 export default function AgentsPage() {
@@ -27,7 +34,7 @@ export default function AgentsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
 
-  const aiRoom = rooms.find(r => r.type === 'ai' && r.created_by === user?.id);
+  const aiRoom = rooms.find(r => r.type === 'ai');
   const roomMsgs = aiRoom ? (messages[aiRoom.id] || []) : [];
   const lastMsg  = roomMsgs[roomMsgs.length - 1];
   const hasHistory = aiRoom && roomMsgs.length > 0;

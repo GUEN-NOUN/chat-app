@@ -70,6 +70,8 @@
     if (submitEx) submitEx.addEventListener('click', function (e) { e.preventDefault(); Pages.submitExercise(); });
     var submitTest = document.getElementById('btn-submit-test');
     if (submitTest) submitTest.addEventListener('click', function (e) { e.preventDefault(); Pages.submitTest(); });
+    var submitDist = document.getElementById('btn-submit-dist');
+    if (submitDist) submitDist.addEventListener('click', function (e) { e.preventDefault(); Pages.submitDistribution(); });
   }
 
   Modals.init();

@@ -10,7 +10,8 @@
     video: 'nl-video',
     pdf: 'nl-pdf',
     exercises: 'nl-ex',
-    tests: 'nl-tests'
+    tests: 'nl-tests',
+    distribution: 'nl-dist'
   };
 
   var menuOpen = false;
@@ -306,7 +307,7 @@
     }
 
     /* SPA nav links */
-    [['nl-home', 'home'], ['nl-video', 'video'], ['nl-pdf', 'pdf'], ['nl-ex', 'exercises'], ['nl-tests', 'tests']].forEach(function (pair) {
+    [['nl-home', 'home'], ['nl-video', 'video'], ['nl-pdf', 'pdf'], ['nl-ex', 'exercises'], ['nl-tests', 'tests'], ['nl-dist', 'distribution']].forEach(function (pair) {
       var el = document.getElementById(pair[0]);
       if (el) {
         el.addEventListener('click', function (e) {

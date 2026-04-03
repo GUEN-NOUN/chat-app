@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useChat } from '../../context/ChatContext';
 
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
@@ -91,10 +91,34 @@ function BubbleAudio({ src }) {
 export default function MessageBubble({ message, isMine }) {
   const { sendReaction, activeRoomId } = useChat();
   const [showEmoji, setShowEmoji] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const longPressRef = useRef(null);
+  const menuRef = useRef(null);
 
   const isAI      = !!message.agentId;
   const reactions = message.reactions || [];
   const mediaSrc  = message.media_url || message.body;
+
+  // Long press detection for context menu
+  const handleTouchStart = useCallback(() => {
+    longPressRef.current = setTimeout(() => setShowMenu(true), 500);
+  }, []);
+  const handleTouchEnd = useCallback(() => {
+    clearTimeout(longPressRef.current);
+  }, []);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!showMenu) return;
+    const close = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setShowMenu(false); };
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [showMenu]);
+
+  const handleCopy = () => {
+    if (message.body) navigator.clipboard?.writeText(message.body);
+    setShowMenu(false);
+  };
 
   return (
     <div className={`bubble-row ${isMine ? 'mine' : 'theirs'} ${isAI ? 'ai-row' : ''}`}>
@@ -118,6 +142,10 @@ export default function MessageBubble({ message, isMine }) {
         <div
           className={`bubble ${isMine ? 'bubble-mine' : 'bubble-theirs'} ${isAI ? 'bubble-ai' : ''}${message.pending ? ' bubble-pending' : ''}`}
           onDoubleClick={() => setShowEmoji(v => !v)}
+          onContextMenu={(e) => { e.preventDefault(); setShowMenu(true); }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchEnd}
         >
           {/* Reply preview */}
           {message.replyTo && (
@@ -184,6 +212,14 @@ export default function MessageBubble({ message, isMine }) {
                 {e}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Context menu (long-press / right-click) */}
+        {showMenu && (
+          <div className="bubble-context-menu" ref={menuRef}>
+            <button className="context-menu-item" onClick={handleCopy}>📋 نسخ</button>
+            <button className="context-menu-item" onClick={() => { setShowEmoji(true); setShowMenu(false); }}>😊 تفاعل</button>
           </div>
         )}
       </div>

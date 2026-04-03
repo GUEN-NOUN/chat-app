@@ -11,13 +11,16 @@ import AgentsPage  from './components/Pages/AgentsPage';
 
 /** Global error boundary */
 class ErrorBoundary extends Component {
-  constructor(props) { super(props); this.state = { hasError: false }; }
-  static getDerivedStateFromError() { return { hasError: true }; }
+  constructor(props) { super(props); this.state = { hasError: false, errorMsg: '' }; }
+  static getDerivedStateFromError(err) { return { hasError: true, errorMsg: err?.message || String(err) }; }
   componentDidCatch(err, info) { console.error('[ErrorBoundary]', err, info); }
   render() {
     if (this.state.hasError) return (
       <div className="splash splash-error">
         <p>⚠️ حدث خطأ غير متوقع</p>
+        <p style={{fontSize:'0.75em',marginTop:'8px',color:'#f88',whiteSpace:'pre-wrap',maxWidth:'90%',wordBreak:'break-word'}}>
+          {this.state.errorMsg}
+        </p>
         <button onClick={() => window.location.reload()} style={{marginTop:'16px',padding:'8px 20px',borderRadius:'8px',cursor:'pointer'}}>
           🔄 إعادة المحاولة
         </button>

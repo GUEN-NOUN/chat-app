@@ -8,9 +8,20 @@ const roomIcons = {
   public: '🌐', group: '👥', dm: '💬', ai: '🤖', lesson: '📚'
 };
 
+function formatLastTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  if (isToday) return d.toLocaleTimeString('ar-MA', { hour: '2-digit', minute: '2-digit' });
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return 'أمس';
+  return d.toLocaleDateString('ar-MA', { month: 'short', day: 'numeric' });
+}
+
 export default function HomePage() {
   const { user, token } = useAuth();
-  const { rooms, joinRoom, connected, dispatch } = useChat();
+  const { rooms, joinRoom, connected, dispatch, messages } = useChat();
   const navigate = useNavigate();
 
   const [search, setSearch]               = useState('');
@@ -158,12 +169,19 @@ export default function HomePage() {
   }, [tab, token]);
 
   // Filter rooms in chats tab — exclude AI rooms (they live in the AI tab)
+  // Sort by last message time (most recent first)
   const filteredRooms = useMemo(() => {
     const nonAi = rooms.filter(r => r.type !== 'ai');
-    if (!search.trim()) return nonAi;
-    const q = search.trim().toLowerCase();
-    return nonAi.filter(r => r.name.toLowerCase().includes(q));
-  }, [rooms, search]);
+    const filtered = !search.trim() ? nonAi
+      : nonAi.filter(r => r.name.toLowerCase().includes(search.trim().toLowerCase()));
+    return filtered.sort((a, b) => {
+      const aMsgs = messages[a.id] || [];
+      const bMsgs = messages[b.id] || [];
+      const aTime = aMsgs[aMsgs.length - 1]?.ts || 0;
+      const bTime = bMsgs[bMsgs.length - 1]?.ts || 0;
+      return new Date(bTime) - new Date(aTime);
+    });
+  }, [rooms, search, messages]);
 
   // Filter users in chats tab
   const filteredUsers = useMemo(() => {
@@ -319,7 +337,15 @@ export default function HomePage() {
           {filteredRooms.length > 0 && (
             <div className="home-section-label">المجموعات والغرف</div>
           )}
-          {filteredRooms.map(room => (
+          {filteredRooms.map(room => {
+            const roomMsgs = messages[room.id] || [];
+            const lastMsg = roomMsgs[roomMsgs.length - 1];
+            const lastText = lastMsg?.type === 'image' ? '📷 صورة'
+              : lastMsg?.type === 'audio' ? '🎤 رسالة صوتية'
+              : lastMsg?.type === 'video' ? '🎬 فيديو'
+              : lastMsg?.type === 'file' ? '📄 ملف'
+              : lastMsg?.body?.slice(0, 40) || '';
+            return (
             <div
               key={room.id}
               className="home-list-item"
@@ -327,12 +353,15 @@ export default function HomePage() {
             >
               <div className="home-item-icon">{roomIcons[room.type] || '💬'}</div>
               <div className="home-item-info">
-                <span className="home-item-name">{room.name}</span>
-                <span className="home-item-desc">{room.description || room.type}</span>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <span className="home-item-name">{room.name}</span>
+                  {lastMsg && <span className="home-item-time">{formatLastTime(lastMsg.ts)}</span>}
+                </div>
+                <span className="home-item-last-msg">{lastText || room.description || room.type}</span>
               </div>
-              <div className="home-item-arrow">←</div>
             </div>
-          ))}
+            );
+          })}
 
           {/* Users section */}
           {filteredUsers.length > 0 && (

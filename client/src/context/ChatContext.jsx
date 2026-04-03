@@ -320,7 +320,7 @@ export function ChatProvider({ children }) {
   }, [token]);
 
   const sendMessage = useCallback((roomId, body, type = 'text', replyTo = null, mediaUrl = null, mime = null) => {
-    if (!body?.trim() || !socketRef.current || !user) return;
+    if (!body?.trim() || !user) return;
     const clientId = `c_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
     // Optimistic add
@@ -337,14 +337,27 @@ export function ChatProvider({ children }) {
       }
     });
 
-    const currentRoom = state.rooms.find(r => r.id === roomId);
-    const isAiRoom = currentRoom?.type === 'ai';
-    socketRef.current.emit('message', {
-      id: clientId, roomId, type, body: body.trim(), replyTo,
-      ...(isAiRoom ? { agentId: 'workflow' } : {}),
-      ...(mediaUrl ? { media_url: mediaUrl, mime } : {})
-    });
-  }, [state.rooms, user]);
+    const emit = () => {
+      const currentRoom = stateRef.current.rooms.find(r => r.id === roomId);
+      const isAiRoom = currentRoom?.type === 'ai';
+      socketRef.current.emit('message', {
+        id: clientId, roomId, type, body: body.trim(), replyTo,
+        ...(isAiRoom ? { agentId: 'workflow' } : {}),
+        ...(mediaUrl ? { media_url: mediaUrl, mime } : {})
+      });
+    };
+
+    // If not yet connected, wait and retry
+    if (!socketRef.current?.connected) {
+      const interval = setInterval(() => {
+        if (socketRef.current?.connected) { clearInterval(interval); emit(); }
+      }, 300);
+      setTimeout(() => clearInterval(interval), 5000); // give up after 5s
+      return;
+    }
+
+    emit();
+  }, [user]);
 
   const sendTyping = useCallback((roomId) => {
     socketRef.current?.emit('typing', { roomId });

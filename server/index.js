@@ -81,7 +81,7 @@ app.use(helmet({
       scriptSrc:  ["'self'", "'unsafe-inline'"],
       styleSrc:   ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc:    ["'self'", "https://fonts.gstatic.com"],
-      imgSrc:     ["'self'", "data:", "https://img.youtube.com", "blob:"],
+      imgSrc:     ["'self'", "data:", "https://img.youtube.com", "blob:", "http://localhost:3000"],
       connectSrc: [
         "'self'",
         "ws://localhost:*", "wss://localhost:*",

@@ -1,0 +1,34 @@
+{
+  "name": "ai-workflow-agent",
+  "version": "3.0.0",
+  "description": "AI Workflow Agent - ScholarGPT + All Free Models - Arabic First",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "install-all": "npm install",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "openai": "^4.67.0",
+    "@anthropic-ai/sdk": "^0.27.0",
+    "@google/generative-ai": "^0.21.0",
+    "groq-sdk": "^0.7.0",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "multer": "^1.4.5-lts.1",
+    "cors": "^2.8.5",
+    "chalk": "^4.1.2",
+    "pdfjs-dist": "^4.7.76",
+    "mammoth": "^1.8.0",
+    "xlsx": "^0.18.5",
+    "pptxgenjs": "^3.12.0",
+    "docx": "^9.0.2",
+    "form-data": "^4.0.1",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}

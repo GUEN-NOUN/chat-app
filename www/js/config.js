@@ -34,6 +34,7 @@ window.APP_CONFIG = {
     PDF_LIST: 'madarik_pdf_list',
     EXERCISES_LIST: 'madarik_exercises_list',
     TESTS_LIST: 'madarik_tests_list',
+    DISTRIBUTION_LIST: 'madarik_distribution_list',
 
     // ── RBAC / Admin system (new) ─────────────────────────────────────────
     // Maps userId → { role, assignedBy, assignedAt }
