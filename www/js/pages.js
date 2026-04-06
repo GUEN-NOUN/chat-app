@@ -16,16 +16,17 @@
   var activeSubject = 'all'; // 'all' or subject id
 
   function getLevelGroup() {
-    var level = (App.getCurrentLevel && App.getCurrentLevel()) || 'first-middle';
+    var level = (App.getCurrentLevel && App.getCurrentLevel()) || 'tcs-sciences';
     if (level.indexOf('primary') !== -1) return 'primary';
+    if (level.indexOf('tcs') !== -1) return 'tcs';
     if (level.indexOf('bac') !== -1 || level.indexOf('shared') !== -1) return 'bac';
-    return 'middle';
+    return 'tcs';
   }
 
   function getSubjects() {
     var cfg = window.APP_CONFIG.SUBJECTS;
     if (!cfg) return [];
-    return cfg[getLevelGroup()] || cfg.middle || [];
+    return cfg[getLevelGroup()] || cfg.tcs || cfg.bac || [];
   }
 
   function buildSubjectSidebar() {

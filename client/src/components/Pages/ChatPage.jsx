@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
 import { useAuth } from '../../context/AuthContext';
@@ -6,16 +6,72 @@ import MessageBubble from '../Chat/MessageBubble';
 import MessageInput from '../Chat/MessageInput';
 import TypingIndicator from '../Chat/TypingIndicator';
 import AgentSelector from '../Agents/AgentSelector';
+import { api } from '../../services/api';
+
+const PDF_ANALYZE_KEY = 'madarik_pdf_analyze';
+
+function getDateLabel(ts) {
+  if (!ts) return null;
+  const d = new Date(ts);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return 'اليوم';
+  if (d.toDateString() === yesterday.toDateString()) return 'أمس';
+  return d.toLocaleDateString('ar-MA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
 
 export default function ChatPage() {
-  const { user } = useAuth();
-  const { activeRoomId, rooms, messages, typingUsers, loadMore, markRead, connected } = useChat();
+  const { user, token } = useAuth();
+  const { activeRoomId, rooms, messages, typingUsers, loadMore, markRead, connected, sendMessage } = useChat();
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showMenu, setShowMenu] = useState(false);
+  const autoSentRef = useRef(false);
 
   const room = rooms.find(r => r.id === activeRoomId);
+
+  // Auto-send pending PDF analysis request once AI room is ready
+  useEffect(() => {
+    if (autoSentRef.current) return;
+    // Accept either the room type being 'ai' OR the roomId being 'ai-workflow' directly
+    const isAiRoom = room?.type === 'ai' || activeRoomId === 'ai-workflow';
+    if (!connected || !user || !isAiRoom) return;
+    try {
+      const raw = sessionStorage.getItem(PDF_ANALYZE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (!data?.prompt || Date.now() - data.ts > 90_000) { sessionStorage.removeItem(PDF_ANALYZE_KEY); return; }
+      autoSentRef.current = true;
+      sessionStorage.removeItem(PDF_ANALYZE_KEY);
+      // Small delay to ensure the room join is complete
+      setTimeout(async () => {
+        if (data.imageData) {
+          // Scanned PDF — upload rendered image and send to Vision model
+          try {
+            const { base64, mime } = data.imageData;
+            const byteChars = atob(base64);
+            const byteArr = new Uint8Array(byteChars.length);
+            for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+            const imgBlob = new Blob([byteArr], { type: mime });
+            const file = new File([imgBlob], 'pdf-page.jpg', { type: mime });
+            const res = await api.uploadFile(file, token);
+            if (res?.url) {
+              sendMessage(activeRoomId, data.prompt, 'image', null, res.url, mime);
+            } else {
+              sendMessage(activeRoomId, data.prompt, 'text');
+            }
+          } catch (_) {
+            sendMessage(activeRoomId, data.prompt, 'text');
+          }
+        } else {
+          sendMessage(activeRoomId, data.prompt, 'text');
+        }
+      }, 800);
+    } catch (_) {}
+  }, [connected, user, room?.type, activeRoomId, sendMessage, token]);
+
   const msgs = messages[activeRoomId] || [];
   const typing = typingUsers[activeRoomId] || {};
   const bottomRef = useRef(null);
@@ -47,6 +103,21 @@ export default function ChatPage() {
   const filteredMsgs = searchQuery.trim()
     ? msgs.filter(m => m.body?.toLowerCase().includes(searchQuery.toLowerCase()))
     : msgs;
+
+  // Build list with date separators inserted between day changes
+  const messagesWithSeps = useMemo(() => {
+    const result = [];
+    let lastDateStr = null;
+    for (const msg of filteredMsgs) {
+      const dateStr = msg.ts ? new Date(msg.ts).toDateString() : null;
+      if (dateStr && dateStr !== lastDateStr) {
+        lastDateStr = dateStr;
+        result.push({ _isSep: true, id: `sep_${msg.ts}`, ts: msg.ts, label: getDateLabel(msg.ts) });
+      }
+      result.push(msg);
+    }
+    return result;
+  }, [filteredMsgs]);
 
   const scrollToBottom = () => {
     isNearBottom.current = true;
@@ -134,13 +205,11 @@ export default function ChatPage() {
             <p>جارٍ تحميل الرسائل...</p>
           </div>
         )}
-        {filteredMsgs.map(msg => (
-          <MessageBubble
-            key={msg.id}
-            message={msg}
-            isMine={msg.senderId === user?.id}
-          />
-        ))}
+        {messagesWithSeps.map(item =>
+          item._isSep
+            ? <div key={item.id} className="date-separator"><span>{item.label}</span></div>
+            : <MessageBubble key={item.id} message={item} isMine={item.senderId === user?.id} />
+        )}
         {typingList.length > 0 && <TypingIndicator names={typingList} />}
         <div ref={bottomRef} />
       </div>

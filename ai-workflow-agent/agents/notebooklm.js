@@ -102,4 +102,49 @@ function detectNotebookLMCommand(input) {
   return { matched: true, mode, content: input };
 }
 
-module.exports = { askNotebookLM, detectNotebookLMCommand, SYSTEM_PROMPT };
+/**
+ * Streaming NotebookLM — Gemini streaming API for real-time tokens.
+ * Falls back to full-response + simulated word-by-word if streaming unavailable.
+ * @param {string}   content
+ * @param {string}   [mode]
+ * @param {Function} onToken  — called with each text chunk
+ * @returns {Promise<string>} full combined text
+ */
+async function streamNotebookLM(content, mode, onToken) {
+  mode = mode || 'analyze';
+  const prefix = MODE_PROMPTS[mode] || '';
+  const prompt = prefix + content;
+
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      const { GoogleGenerativeAI } = require('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-1.5-pro',
+        systemInstruction: SYSTEM_PROMPT,
+      });
+      const result = await model.generateContentStream(prompt);
+      let full = '';
+      for await (const chunk of result.stream) {
+        const token = chunk.text();
+        if (token) { full += token; if (onToken) onToken(token); }
+      }
+      return full;
+    } catch (streamErr) {
+      console.warn('[NotebookLM] Gemini streaming فشل، جاري التبديل:', streamErr.message);
+    }
+  }
+
+  // Fallback: get full text then simulate word-by-word for smooth UI
+  const text = await askNotebookLM(content, mode);
+  if (onToken) {
+    const words = text.split(/(\s+)/);
+    for (const w of words) {
+      if (w) onToken(w);
+      await new Promise(r => (typeof setImmediate !== 'undefined' ? setImmediate(r) : setTimeout(r, 0)));
+    }
+  }
+  return text;
+}
+
+module.exports = { askNotebookLM, streamNotebookLM, detectNotebookLMCommand, SYSTEM_PROMPT };

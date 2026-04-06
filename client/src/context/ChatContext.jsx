@@ -62,6 +62,24 @@ function reducer(state, action) {
       return { ...state, messages: { ...state.messages, [action.roomId]: msgs } };
     }
 
+    // AI thinking placeholder — shown while waiting for AI response
+    case 'AI_THINKING': {
+      const msgs = state.messages[action.roomId] || [];
+      if (msgs.find(m => m.id === action.msgId)) return state;
+      return {
+        ...state,
+        messages: {
+          ...state.messages,
+          [action.roomId]: [...msgs, {
+            id: action.msgId, roomId: action.roomId,
+            sender: 'AI', type: 'text',
+            body: '', streaming: true, thinking: true,
+            ts: new Date().toISOString(), agentId: true, agentAvatar: '🤖'
+          }]
+        }
+      };
+    }
+
     // Streaming AI: create placeholder or append token
     case 'APPEND_AI_CHUNK': {
       const msgs    = state.messages[action.roomId] || [];
@@ -70,14 +88,24 @@ function reducer(state, action) {
       if (!exists) {
         nextMsgs = [...msgs, {
           id: action.msgId, roomId: action.roomId,
-          sender: 'AI', type: 'text',
-          body: action.token, streaming: !action.done,
+          sender: action.model || 'AI', type: 'text',
+          body: action.token, streaming: !action.done, thinking: false,
+          agentAvatar: action.emoji || '🤖',
           ts: new Date().toISOString(), agentId: true
         }];
       } else {
         nextMsgs = msgs.map(m =>
           m.id === action.msgId
-            ? { ...m, body: m.body + action.token, streaming: !action.done }
+            ? {
+                ...m,
+                body: action.done
+                  ? (action.token || m.body)   // keep accumulated body if token is empty
+                  : (m.body + (action.token || '')),
+                streaming: !action.done,
+                thinking: false,
+                sender: action.model || m.sender,
+                agentAvatar: action.emoji || m.agentAvatar
+              }
             : m
         );
       }
@@ -130,6 +158,9 @@ function reducer(state, action) {
       return { ...state, hasMore: { ...state.hasMore, [action.roomId]: action.hasMore },
                nextCursor: { ...state.nextCursor, [action.roomId]: action.nextCursor } };
 
+    case 'SET_ACTIVE_MODEL':
+      return { ...state, activeModelId: action.modelId };
+
     default:
       return state;
   }
@@ -143,6 +174,7 @@ const initialState = {
   presence:     {},
   agents:       [],
   activeAgentId: null,
+  activeModelId: null,   // null = auto-routing
   connected:    false,
   hasMore:      {},
   nextCursor:   {}
@@ -245,9 +277,14 @@ export function ChatProvider({ children }) {
       dispatch({ type: 'CONFIRM_MESSAGE', clientId, serverId, ts });
     });
 
+    // AI thinking placeholder  
+    socket.on('ai:thinking', ({ msgId, roomId }) => {
+      dispatch({ type: 'AI_THINKING', roomId, msgId });
+    });
+
     // AI streaming chunks
-    socket.on('ai:chunk', ({ msgId, roomId, token, done }) => {
-      dispatch({ type: 'APPEND_AI_CHUNK', roomId, msgId, token, done });
+    socket.on('ai:chunk', ({ msgId, roomId, token, done, model, emoji }) => {
+      dispatch({ type: 'APPEND_AI_CHUNK', roomId, msgId, token, done, model, emoji });
     });
 
     socket.on('reaction', ({ messageId, roomId, reactions }) =>
@@ -284,7 +321,7 @@ export function ChatProvider({ children }) {
     return () => {
       socket.off('connect'); socket.off('disconnect'); socket.off('auth:ok');
       socket.off('rooms'); socket.off('history'); socket.off('message');
-      socket.off('message:ack'); socket.off('ai:chunk');
+      socket.off('message:ack'); socket.off('ai:thinking'); socket.off('ai:chunk');
       socket.off('reaction'); socket.off('typing'); socket.off('typing:stop'); socket.off('presence');
       socket.off('error');
       socket.io.off('reconnect');
@@ -340,9 +377,11 @@ export function ChatProvider({ children }) {
     const emit = () => {
       const currentRoom = stateRef.current.rooms.find(r => r.id === roomId);
       const isAiRoom = currentRoom?.type === 'ai';
+      const activeModel = stateRef.current.activeModelId;
       socketRef.current.emit('message', {
         id: clientId, roomId, type, body: body.trim(), replyTo,
         ...(isAiRoom ? { agentId: 'workflow' } : {}),
+        ...(isAiRoom && activeModel ? { forceModel: activeModel } : {}),
         ...(mediaUrl ? { media_url: mediaUrl, mime } : {})
       });
     };
@@ -382,10 +421,15 @@ export function ChatProvider({ children }) {
     setTimeout(() => loadingMore.current.delete(roomId), 5000);
   }, []);
 
+  const setActiveModel = useCallback((modelId) => {
+    dispatch({ type: 'SET_ACTIVE_MODEL', modelId: modelId || null });
+  }, []);
+
   return (
     <ChatContext.Provider value={{
       ...state,
       joinRoom, sendMessage, sendTyping, sendReaction, markRead, loadMore,
+      setActiveModel,
       dispatch
     }}>
       {children}

@@ -142,7 +142,7 @@ function attachSocket(io) {
     });
 
     /* â”€â”€ MESSAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-    socket.on('message', async ({ id: clientId, roomId, type, body, replyTo, agentId, media_url, mime } = {}) => {
+    socket.on('message', async ({ id: clientId, roomId, type, body, replyTo, agentId, media_url, mime, forceModel } = {}) => {
       if (!roomId || !body) return;
 
       // Per-message ban check — catches users banned after socket handshake
@@ -202,6 +202,9 @@ function attachSocket(io) {
         const aiMsgId = crypto.randomUUID();
         const sessionId = `${userId}:${roomId}`;
 
+        // Notify sender that AI is thinking BEFORE calling orchestrator
+        socket.emit('ai:thinking', { roomId, msgId: aiMsgId });
+
         try {
           const { runOrchestrator } = require('../../ai-workflow-agent/orchestrator');
 
@@ -227,23 +230,34 @@ function attachSocket(io) {
               ? cleanBody
               : (mediaData?.type === 'image' ? 'حلل هذه الصورة بالتفصيل' : cleanBody),
             sessionId,
-            mediaData
+            mediaData,
+            typeof forceModel === 'string' ? forceModel : null,
+            // Streaming callback — emits each token as it arrives
+            (token) => {
+              socket.emit('ai:chunk', { msgId: aiMsgId, roomId, token, done: false });
+            }
           );
           const agentLabel = `${result.emoji} ${result.model}`;
-          const fullText = result.output || '…';
+          // If streamed, output is '' — just send done signal with model info
+          const fullText = result.output || '';
 
           const savedId = saveMessage(
             roomId, 'agent_workflow', agentLabel, 'text',
-            fullText, aiMsgId, serverId, 'workflow'
+            result.streamed ? `[streamed via ${result.model}]` : fullText,
+            aiMsgId, serverId, 'workflow'
           );
-          socket.emit('ai:chunk', { msgId: aiMsgId, roomId, token: fullText, done: true, model: result.model });
-          socket.to(roomId).emit('message', {
-            id: savedId, roomId,
-            senderId: 'agent_workflow', sender: agentLabel,
-            type: 'text', body: fullText,
-            ts: new Date().toISOString(),
-            agentId: 'workflow', agentAvatar: result.emoji, replyTo: serverId
-          });
+          // done:true with empty token lets the reducer keep the already-accumulated streamed body
+          socket.emit('ai:chunk', { msgId: aiMsgId, roomId, token: fullText, done: true, model: result.model, emoji: result.emoji });
+          if (!result.streamed) {
+            // Non-streamed: broadcast full message to room
+            socket.to(roomId).emit('message', {
+              id: savedId, roomId,
+              senderId: 'agent_workflow', sender: agentLabel,
+              type: 'text', body: fullText,
+              ts: new Date().toISOString(),
+              agentId: 'workflow', agentAvatar: result.emoji, replyTo: serverId
+            });
+          }
         } catch (err) {
           console.error('AI Workflow error:', err.message);
           const errBody = `⚠️ خطأ في نظام الذكاء الاصطناعي:\n🔍 ${err.message?.slice(0, 150) || 'خطأ غير معروف'}`;

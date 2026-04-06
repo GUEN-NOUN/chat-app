@@ -48,8 +48,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
     "@capacitor/android": "^8.2.0",
-    "@capacitor/cli": "^8.1.0",
-    "@capacitor/core": "^8.1.0",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/ios": "^8.3.0",
     "@capacitor/splash-screen": "^8.0.1",

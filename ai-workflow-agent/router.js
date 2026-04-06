@@ -12,7 +12,7 @@ const {
   askDeepSeek, askMistral, askCohere, askClaude
 } = require('./agents/free-models');
 const { withFallback } = require('./fallback');
-const { askOpenRouterVision } = require('./agents/openrouter');
+const { askOpenRouter, askOpenRouterVision } = require('./agents/openrouter');
 
 // ══ قواعد التوجيه الكاملة ══════════════════
 const RULES = [
@@ -232,4 +232,48 @@ async function routeTask(input, history = [], imageBase64 = null) {
   return { ...result, intent: 'general' };
 }
 
-module.exports = { routeTask, RULES };
+// ══ جدول النماذج المتاحة للاختيار اليدوي ══════════════
+const MODEL_HANDLERS = {
+  'gemini-flash':        (p, h)      => askGemini(p, 'gemini-2.0-flash'),
+  'gemini-pro':          (p, h)      => askGeminiPro(p),
+  'gemini-vision':       (p, h, img) => askGeminiVision(p, img),
+  'groq-llama':          (p, h)      => askGroq(p, h, 'llama-3.3-70b-versatile'),
+  'groq-vision':         (p, h, img) => askGroqVision(p, img),
+  'qwen':                (p, h)      => askQwen(p, h),
+  'scholar':             (p, h)      => askScholarGPT(p, h),
+  'deepseek':            (p, h)      => askDeepSeek(p, true),
+  'deepseek-chat':       (p, h)      => askDeepSeek(p, false),
+  'claude':              (p, h)      => askClaude(p, h),
+  'cohere':              (p, h)      => askCohere(p),
+  'mistral':             (p, h)      => askMistral(p),
+  'openrouter-llama':    (p, h)      => askOpenRouter(p, 'meta-llama/llama-3.3-70b-instruct:free'),
+  'openrouter-qwen3':    (p, h)      => askOpenRouter(p, 'qwen/qwen3-235b-a22b:free'),
+  'openrouter-deepseek': (p, h)      => askOpenRouter(p, 'deepseek/deepseek-r1-0528:free'),
+  'openrouter-gemma':    (p, h)      => askOpenRouter(p, 'google/gemma-3-27b-it:free'),
+};
+
+/**
+ * توجيه مباشر لنموذج معين — يتجاوز التوجيه التلقائي.
+ * @param {string} modelId
+ * @param {string} input
+ * @param {Array}  history
+ * @param {string|null} imageBase64
+ */
+async function forceRoute(modelId, input, history = [], imageBase64 = null) {
+  const handler = MODEL_HANDLERS[modelId];
+  if (!handler) {
+    console.log(`  → [forceRoute] "${modelId}" غير معروف — fallback تلقائي`);
+    return routeTask(input, history, imageBase64);
+  }
+  console.log(`  → [forceRoute] ${modelId}`);
+  try {
+    const output = await handler(input, history, imageBase64);
+    const label  = modelId;
+    return { output, model: label, intent: 'manual' };
+  } catch (err) {
+    console.warn(`  [forceRoute] ${modelId} فشل (${err.message}) — تبديل تلقائي`);
+    return routeTask(input, history, imageBase64);
+  }
+}
+
+module.exports = { routeTask, forceRoute, MODEL_HANDLERS, RULES };

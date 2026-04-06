@@ -1,30 +1,21 @@
-# =============================================================================
-# ProGuard rules — مدارك التعليمية (Madarik)
-# =============================================================================
+# Add project specific ProGuard rules here.
+# You can control the set of applied configuration files using the
+# proguardFiles setting in build.gradle.
+#
+# For more details, see
+#   http://developer.android.com/guide/developing/tools/proguard.html
 
-# ── Capacitor bridge ─────────────────────────────────────────────────────────
-# Keep all Capacitor classes so the JS <-> native bridge survives minification.
--keep class com.getcapacitor.** { *; }
--keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
--keep class com.match.chat.** { *; }
+# If your project uses WebView with JS, uncomment the following
+# and specify the fully qualified class name to the JavaScript interface
+# class:
+#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
+#   public *;
+#}
 
-# ── WebView JavaScript interface ─────────────────────────────────────────────
-# Any class annotated with @JavascriptInterface must keep all its public members
-# so the WebView can call them by name from JavaScript.
--keepclassmembers class * {
-    @android.webkit.JavascriptInterface <methods>;
-}
+# Uncomment this to preserve the line number information for
+# debugging stack traces.
+#-keepattributes SourceFile,LineNumberTable
 
-# ── AndroidX / AppCompat ─────────────────────────────────────────────────────
--keep class androidx.** { *; }
--keep interface androidx.** { *; }
-
-# ── Stack traces ─────────────────────────────────────────────────────────────
-# Preserve line numbers so crash reports are readable.
--keepattributes SourceFile,LineNumberTable
--renamesourcefileattribute SourceFile
-
-# ── Suppress warnings for known safe removals ─────────────────────────────────
--dontwarn org.xmlpull.v1.**
--dontwarn okio.**
--dontwarn okhttp3.**
+# If you keep the line number information, uncomment this to
+# hide the original source file name.
+#-renamesourcefileattribute SourceFile

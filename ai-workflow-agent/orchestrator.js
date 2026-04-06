@@ -5,10 +5,10 @@
 //   orchestrator.js — نقطة الدخول الرئيسية
 // ══════════════════════════════════════════
 
-const { routeTask, RULES } = require('./router');
+const { routeTask, forceRoute, MODEL_HANDLERS, RULES } = require('./router');
 const { MemoryStore }       = require('./memory');
 const { detectDocCommand, generateDocument }     = require('./agents/docgen');
-const { detectNotebookLMCommand, askNotebookLM } = require('./agents/notebooklm');
+const { detectNotebookLMCommand, askNotebookLM, streamNotebookLM } = require('./agents/notebooklm');
 
 const memory = new MemoryStore();
 
@@ -16,9 +16,10 @@ const memory = new MemoryStore();
  * نقطة الدخول الرئيسية للذكاء الاصطناعي.
  * @param {string}      userInput
  * @param {string}      [sessionId]
- * @param {object|null} [mediaData] — { type:'image'|'audio', base64, mimeType }
+ * @param {object|null} [mediaData]   — { type:'image'|'audio', base64, mimeType }
+ * @param {Function}    [onToken]     — تستقبل كل جزء نصي عند التدفق التدريجي
  */
-async function runOrchestrator(userInput, sessionId, mediaData) {
+async function runOrchestrator(userInput, sessionId, mediaData, forceModel, onToken) {
   sessionId = sessionId || 'default';
   const mediaLabel = mediaData ? ' | media=' + mediaData.type : '';
   console.log('\n🧠 Workflow | session=' + sessionId + mediaLabel + ' | "' + userInput.slice(0, 60) + '"');
@@ -42,20 +43,24 @@ async function runOrchestrator(userInput, sessionId, mediaData) {
     // ── 2. تحليل NotebookLM ───────────────────────────────────
     const nbCmd = detectNotebookLMCommand(userInput);
     if (nbCmd.matched) {
-      console.log('  → 📓 NotebookLM mode=' + nbCmd.mode);
+      console.log('  → 📓 NotebookLM mode=' + nbCmd.mode + (onToken ? ' [streaming]' : ''));
       try {
-        const out = await askNotebookLM(nbCmd.content, nbCmd.mode);
+        const out = onToken
+          ? await streamNotebookLM(nbCmd.content, nbCmd.mode, onToken)
+          : await askNotebookLM(nbCmd.content, nbCmd.mode);
         if (out && out.trim().length > 10) {
           await _save(sessionId, userInput, out, 'NotebookLM');
-          return { output: out, model: 'NotebookLM', emoji: '📓' };
+          return { output: onToken ? '' : out, model: 'NotebookLM', emoji: '📓', streamed: !!onToken };
         }
       } catch (err) { console.warn('  NotebookLM error:', err.message); }
     }
   }
 
-  // ── 3. توجيه — router.js الجديد يقبل imageBase64 مباشرة ────
+  // ── 3. توجيه — يدوي أو تلقائي ────────────────────────────
   const imageBase64 = (mediaData && mediaData.type === 'image') ? mediaData.base64 : null;
-  const result = await routeTask(userInput, history, imageBase64);
+  const result = (forceModel && forceModel !== 'auto')
+    ? await forceRoute(forceModel, userInput, history, imageBase64)
+    : await routeTask(userInput, history, imageBase64);
 
   // ── 4. معالجة الصوت ────────────────────────────────────────
   if (mediaData && mediaData.type === 'audio') {
@@ -73,6 +78,15 @@ async function runOrchestrator(userInput, sessionId, mediaData) {
 
   await _save(sessionId, userInput, result.output, result.model);
   console.log('  ✅ [' + (result.intent || 'general') + '] ' + result.model + ' → ' + result.output.length + ' chars');
+  // ── 5. تدفق word-by-word للنماذج التي لا تدعم streaming مدمج ──────────────
+  if (onToken && result.output) {
+    const words = result.output.split(/(\s+)/);
+    for (const w of words) {
+      if (w) onToken(w);
+      await new Promise(r => (typeof setImmediate !== 'undefined' ? setImmediate(r) : setTimeout(r, 0)));
+    }
+    return { output: '', model: result.model, emoji: _emoji(result.intent), intent: result.intent, streamed: true };
+  }
   return { output: result.output, model: result.model, emoji: _emoji(result.intent), intent: result.intent };
 }
 
@@ -134,4 +148,4 @@ async function testAll() {
   return results;
 }
 
-module.exports = { runOrchestrator, getAvailableAgents, testAll };
+module.exports = { runOrchestrator, getAvailableAgents, testAll, MODEL_HANDLERS };

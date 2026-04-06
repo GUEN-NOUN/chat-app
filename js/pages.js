@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 /**
  * Page renderers and handlers. Uses IndexedDB for PDF blobs (no broken URLs on refresh).
@@ -16,16 +16,17 @@
   var activeSubject = 'all'; // 'all' or subject id
 
   function getLevelGroup() {
-    var level = (App.getCurrentLevel && App.getCurrentLevel()) || 'first-middle';
+    var level = (App.getCurrentLevel && App.getCurrentLevel()) || 'tcs-sciences';
     if (level.indexOf('primary') !== -1) return 'primary';
+    if (level.indexOf('tcs') !== -1) return 'tcs';
     if (level.indexOf('bac') !== -1 || level.indexOf('shared') !== -1) return 'bac';
-    return 'middle';
+    return 'tcs';
   }
 
   function getSubjects() {
     var cfg = window.APP_CONFIG.SUBJECTS;
     if (!cfg) return [];
-    return cfg[getLevelGroup()] || cfg.middle || [];
+    return cfg[getLevelGroup()] || cfg.tcs || cfg.bac || [];
   }
 
   function buildSubjectSidebar() {
@@ -285,7 +286,7 @@
       '<div class="home-card" data-section="pdf"><span class="hc-icon">📄</span><div class="hc-title">تحميل PDF</div><div class="hc-count">' + (p ? p.length : 0) + ' ملف</div></div>' +
       '<div class="home-card" data-section="exercises"><span class="hc-icon">📝</span><div class="hc-title">سلاسل التمارين</div><div class="hc-count">' + (ex ? ex.length : 0) + ' سلسلة</div></div>' +
       '<div class="home-card" data-section="tests"><span class="hc-icon">📋</span><div class="hc-title">الامتحانات التجريبية</div><div class="hc-count">' + (t ? t.length : 0) + ' امتحان</div></div>' +
-      '<div class="home-card" data-section="distribution"><span class="hc-icon">�</span><div class="hc-title">التوجيه المدرسي</div><div class="hc-count">' + (dist ? dist.length : 0) + ' منشور</div></div>' +
+      '<div class="home-card" data-section="distribution"><span class="hc-icon">📋</span><div class="hc-title">التوجيه المدرسي</div><div class="hc-count">' + (dist ? dist.length : 0) + ' منشور</div></div>' +
       '</div></div>';
     // Add subjects quick strip
     var subjects = getSubjects();
@@ -767,7 +768,7 @@
           '</div>';
       }).join('') + '</div>';
     }
-    var html = '<div class="sec-header"><div class="sec-icon">�</div><h2>التوجيه المدرسي</h2>' +
+    var html = '<div class="sec-header"><div class="sec-icon">📋</div><h2>التوجيه المدرسي</h2>' +
       '<span class="sec-count">' + allItems.length + ' منشور</span></div>' +
       adminBarHtml + cardsHtml;
     var page = document.getElementById('page');

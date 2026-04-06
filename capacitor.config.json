@@ -1,14 +1,15 @@
 {
   "appId": "com.match.chat",
-  "appName": "\u0645\u062f\u0627\u0631\u0643 \u0627\u0644\u062a\u0639\u0644\u064a\u0645\u064a\u0629",
+  "appName": "مدارك التعليمية",
   "webDir": "www",
-
   "server": {
     "androidScheme": "https",
     "iosScheme": "https",
-    "allowNavigation": ["http://192.168.1.141:3000", "ws://192.168.1.141:3000"]
+    "allowNavigation": [
+      "http://192.168.1.141:3000",
+      "ws://192.168.1.141:3000"
+    ]
   },
-
   "android": {
     "allowMixedContent": true,
     "captureInput": true,
@@ -16,7 +17,6 @@
     "backgroundColor": "#0b1629",
     "overrideUserAgent": "MadarikApp/1.0 Android"
   },
-
   "ios": {
     "allowsLinkPreview": false,
     "scrollEnabled": true,
@@ -25,7 +25,6 @@
     "contentInset": "automatic",
     "usesFonts": true
   },
-
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 2500,
