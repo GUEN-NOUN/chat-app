@@ -1,0 +1,186 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <!--
+    SECURITY: Prevent caching of admin page so session state is never
+    served from browser cache after logout.
+  -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+  <meta http-equiv="Pragma" content="no-cache"/>
+  <meta http-equiv="Expires" content="0"/>
+  <title>لوحة الإدارة | مدارك التعليمية</title>
+
+  <!-- Fonts (shared with main app) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- Shared app styles + admin-specific overrides -->
+  <link rel="stylesheet" href="css/main.css?v=8"/>
+  <link rel="stylesheet" href="css/admin.css?v=1"/>
+
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg"/>
+  <meta name="theme-color" content="#0b1629"/>
+
+  <!--
+    SECURITY NOTE: This page has no server-side enforcement.
+    All RBAC checks are performed client-side by js/rbac.js.
+    In a production deployment these checks MUST be mirrored on the server.
+  -->
+</head>
+<body>
+
+  <!-- ── Global toast (shared with admin-panel.js) ──────────────────────── -->
+  <span class="adm-toast" id="adm-toast"></span>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       LOGIN SCREEN — shown when RBAC.isAuthenticated() is false
+       ════════════════════════════════════════════════════════════════════ -->
+  <div id="adm-login">
+    <div class="adm-login-wrap">
+      <div class="adm-login-card">
+
+        <h1>🛡️ لوحة إدارة مدارك</h1>
+        <p>أدخل بيانات حساب المسؤول للمتابعة</p>
+
+        <form id="adm-login-form" autocomplete="off" novalidate>
+          <div class="form-field">
+            <label for="adm-email">البريد الإلكتروني</label>
+            <input type="email" id="adm-email"
+                   placeholder="admin@example.com"
+                   autocomplete="username"
+                   required/>
+          </div>
+          <div class="form-field">
+            <label for="adm-pass">كلمة المرور</label>
+            <input type="password" id="adm-pass"
+                   placeholder="••••••••"
+                   autocomplete="current-password"
+                   required/>
+          </div>
+
+          <div class="adm-login-err" id="adm-login-err" role="alert"></div>
+
+          <!-- Disabled until bootstrapSuperadmin() resolves -->
+          <button class="btn btn-primary" type="submit"
+                  id="adm-login-btn" disabled style="width:100%;margin-top:4px">
+            🔐 دخول
+          </button>
+        </form>
+
+        <!--
+          PRIVACY NOTICE (GDPR Art. 13): Displayed on the login page so
+          any admin who logs in is informed about data handling.
+        -->
+        <div style="margin-top:20px;padding:12px;background:rgba(78,140,255,.07);
+                    border:1px solid rgba(78,140,255,.2);border-radius:8px">
+          <p style="font-size:12px;color:#64748b;line-height:1.6;margin:0">
+            🔒 <strong>ملاحظة الخصوصية:</strong>
+            جميع الإجراءات الإدارية مُسجَّلة في سجل التدقيق.
+            الوصول إلى محتوى المستخدمين مقيّد بالبلاغات المُقدَّمة فقط.
+          </p>
+        </div>
+
+        <p style="text-align:center;margin-top:16px">
+          <a href="index.html" style="color:#64748b;font-size:12px">
+            ← العودة إلى التطبيق
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       DASHBOARD — hidden until login completes
+       ════════════════════════════════════════════════════════════════════ -->
+  <div id="adm-dash" style="display:none">
+    <div class="adm-page">
+
+      <!-- ── Sidebar ─────────────────────────────────────────────────── -->
+      <aside class="adm-sidebar">
+
+        <div class="adm-logo">
+          <h1>🛡️ لوحة الإدارة</h1>
+          <p>مدارك التعليمية</p>
+        </div>
+
+        <!-- Currently-logged-in admin info -->
+        <div class="adm-identity-bar">
+          <div id="adm-role-badge"></div>
+          <div style="margin-top:4px;font-size:11px;word-break:break-all" id="adm-identity"></div>
+        </div>
+
+        <!-- Tab buttons — data-tab drives switchTab() -->
+        <nav>
+          <button type="button" data-tab="stats">📊 الإحصائيات</button>
+          <button type="button" data-tab="users">👤 المستخدمون</button>
+          <button type="button" data-tab="reports">🚨 البلاغات</button>
+          <button type="button" data-tab="logs">📋 سجل التدقيق</button>
+          <!--
+            Roles tab is hidden for non-superadmin roles.
+            admin-panel.js sets display:none at runtime.
+          -->
+          <button type="button" data-tab="roles" id="tab-btn-roles">⚙️ الأدوار والحسابات</button>
+          <button type="button" data-tab="media">🖼️ الوسائط العامة</button>
+          <button type="button" data-tab="privacy">🔒 سياسة الخصوصية</button>
+        </nav>
+
+        <div class="adm-sidebar-footer">
+          <button type="button" class="btn-logout" id="adm-logout-btn">
+            🚪 تسجيل الخروج
+          </button>
+        </div>
+
+      </aside>
+
+      <!-- ── Main content area ─────────────────────────────────────────── -->
+      <main class="adm-main">
+        <!--
+          Tab content is rendered dynamically by admin-panel.js.
+          Using textContent = '' to clear prevents XSS from innerHTML.
+        -->
+        <div id="adm-content"></div>
+      </main>
+
+    </div><!-- /.adm-page -->
+  </div><!-- /#adm-dash -->
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       SCRIPTS — load order matters (dependencies declared first)
+       ════════════════════════════════════════════════════════════════════ -->
+
+  <!-- 1. Version tag (sets window.APP_VERSION) -->
+  <script src="js/version.js?v=3"></script>
+
+  <!-- 2. App config (sets window.APP_CONFIG including STORAGE_KEYS) -->
+  <script src="js/config.js?v=3"></script>
+
+  <!-- 3. Shared utilities -->
+  <script src="js/utils.js?v=3"></script>
+
+  <!-- 4. Storage layer (localStorage + IndexedDB) -->
+  <script src="js/storage.js?v=3"></script>
+
+  <!-- 5. RBAC — must load before AuditLog and Reports -->
+  <script src="js/rbac.js?v=1"></script>
+
+  <!-- 6. AuditLog — must load before Reports and AdminPanel -->
+  <script src="js/audit-log.js?v=1"></script>
+
+  <!-- 7. Reports -->
+  <script src="js/reports.js?v=1"></script>
+
+  <!-- 8. UserRegistry (needed for the Users tab) -->
+  <script src="js/user-registry.js?v=3"></script>
+
+  <!--
+    9. AdminPanel — initialises itself via DOMContentLoaded.
+       Calls RBAC.bootstrapSuperadmin() on login, which derives the
+       superadmin credential hash from APP_CONFIG.CREDS on first run.
+  -->
+  <script src="js/admin-panel.js?v=1"></script>
+
+</body>
+</html>

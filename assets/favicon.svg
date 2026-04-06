@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Brand: مدارك التعليمية — navy bg, blue book, gold spine -->
+  <rect width="32" height="32" rx="7" fill="#0b1629"/>
+  <!-- Left page -->
+  <path d="M5 9 Q5 8 6 8 H14.5 V24 H6 Q5 24 5 23 Z" fill="#2a5aff"/>
+  <!-- Right page -->
+  <path d="M17.5 8 H26 Q27 8 27 9 V23 Q27 24 26 24 H17.5 Z" fill="#2a5aff"/>
+  <!-- Spine -->
+  <rect x="14" y="7" width="4" height="18" rx="1" fill="#f5a623"/>
+  <!-- Lines — left page -->
+  <rect x="7"  y="12" width="5.5" height="1.5" rx="0.8" fill="rgba(255,255,255,.75)"/>
+  <rect x="7"  y="15" width="4.5" height="1.5" rx="0.8" fill="rgba(255,255,255,.50)"/>
+  <rect x="7"  y="18" width="5.5" height="1.5" rx="0.8" fill="rgba(255,255,255,.50)"/>
+  <!-- Lines — right page -->
+  <rect x="19.5" y="12" width="5.5" height="1.5" rx="0.8" fill="rgba(255,255,255,.75)"/>
+  <rect x="19.5" y="15" width="4.5" height="1.5" rx="0.8" fill="rgba(255,255,255,.50)"/>
+  <rect x="19.5" y="18" width="5.5" height="1.5" rx="0.8" fill="rgba(255,255,255,.50)"/>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <!-- Apple Touch Icon (180×180) — مدارك التعليمية -->
+  <!-- Apple rounds the corners itself; fill entire canvas for the icon -->
+  <rect width="180" height="180" fill="#0b1629"/>
+  <!-- Left page -->
+  <path d="M28 50 Q28 44 34 44 H84 V136 H34 Q28 136 28 130 Z" fill="#2a5aff"/>
+  <!-- Right page -->
+  <path d="M96 44 H146 Q152 44 152 50 V130 Q152 136 146 136 H96 Z" fill="#2a5aff"/>
+  <!-- Spine -->
+  <rect x="80" y="38" width="20" height="104" rx="5" fill="#f5a623"/>
+  <!-- Lines — left page -->
+  <rect x="38" y="68"  width="34" height="8" rx="4" fill="rgba(255,255,255,.8)"/>
+  <rect x="38" y="82"  width="28" height="8" rx="4" fill="rgba(255,255,255,.5)"/>
+  <rect x="38" y="96"  width="34" height="8" rx="4" fill="rgba(255,255,255,.5)"/>
+  <rect x="38" y="110" width="22" height="8" rx="4" fill="rgba(255,255,255,.4)"/>
+  <!-- Lines — right page -->
+  <rect x="108" y="68"  width="34" height="8" rx="4" fill="rgba(255,255,255,.8)"/>
+  <rect x="108" y="82"  width="28" height="8" rx="4" fill="rgba(255,255,255,.5)"/>
+  <rect x="108" y="96"  width="34" height="8" rx="4" fill="rgba(255,255,255,.5)"/>
+  <rect x="108" y="110" width="22" height="8" rx="4" fill="rgba(255,255,255,.4)"/>
+</svg>
